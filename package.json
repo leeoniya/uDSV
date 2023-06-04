@@ -1,0 +1,37 @@
+{
+  "name": "ucsv",
+  "version": "0.1.0",
+  "description": "A small, fast CSV parser",
+  "main": "./dist/uCSV.cjs.js",
+  "module": "./dist/uCSV.esm.js",
+  "typings": "./dist/uCSV.d.ts",
+  "scripts": {
+    "build": "rollup -c --bundleConfigAsCjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leeoniya/uCSV.git"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "dist"
+  ],
+  "keywords": [
+    "csv",
+    "parse",
+    "parser"
+  ],
+  "author": "Leon Sorokin <leeoniya@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/leeoniya/uCSV/issues"
+  },
+  "homepage": "https://github.com/leeoniya/uCSV#readme",
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.3",
+    "rollup": "^3.23.0"
+  }
+}
