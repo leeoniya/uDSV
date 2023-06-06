@@ -1,29 +1,104 @@
-// const takeToQuote      = /[^"]+/my;
-// const takeToCommaOrEOL = /[^,\n]+/my;
-const quote   =  '"'.charCodeAt(0);
-// const comma   =  ','.charCodeAt(0);
-// const cr      = '\r'.charCodeAt(0);
-// const lf      = '\n'.charCodeAt(0);
-// const tab     = '\t'.charCodeAt(0);
+const comma = ',';
+const quote = '"';
+const tab   = '\t';
+const pipe  = '|';
+const semi  = ';';
+const colo  = ':';
 
-export function parse(csvStr) {
-	const firstRow = csvStr.match(/(.*)(\r?\n?)/);
-	const maxCols = Math.min(500, firstRow[1].length);
-	const rowDelim = firstRow[2];
-	const colDelim = /\t/.test(firstRow[1]) ? '\t' : ',';
-	const header = _parse(firstRow[1], maxCols, rowDelim, colDelim)[0];
-	const numCols = Object.keys(header).length;
+const countQuotes = str => str.match(/"/g)?.length ?? 0;
 
-	return  _parse(csvStr, numCols, rowDelim, colDelim);
+// https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
+
+// schema guesser
+export function schema(csvStr) {
+	// will fail if header contains line breaks in quoted value
+	// will fail if single line without line breaks
+	const firstRowMatch = csvStr.match(/(.*)(\r?\n?)/);
+
+	const firstRowStr   = firstRowMatch[1];
+	const rowDelim      = firstRowMatch[2];
+	const colDelim      = (
+		firstRowStr.indexOf(tab)  > -1 ? tab  :
+		firstRowStr.indexOf(pipe) > -1 ? pipe :
+		firstRowStr.indexOf(semi) > -1 ? semi :
+	//	firstRowStr.indexOf(colo) > -1 ? colo :
+		comma
+	);
+
+	// TODO: detect single quotes?
+	let hasQuotes = countQuotes(firstRowStr) > 1;
+
+	// probe 2500 data chars for quotes
+	if (!hasQuotes) {
+		let from = firstRowMatch.index;
+		hasQuotes = countQuotes(csvStr.slice(from, from + 2500)) > 1;
+	}
+
+	const schema = {
+		quote: hasQuotes ? quote : '',
+		cols: {
+			delim: colDelim,
+			names: [],
+			types: [], // ['s','n','b','e'], // enums?
+		},
+		rows: {
+			delim: rowDelim,
+		},
+	};
+
+	// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
+
+	const _maxCols = firstRowStr.match(new RegExp(colDelim, 'g')).length + 1;
+	const limit = 10;
+	const firstRows = _parseAllTuples(csvStr, schema, limit, _maxCols);
+	const header = Object.keys(firstRows.shift());
+	schema.cols.names = header; // todo: trim?
+	schema.cols.types = Array(header.length).fill('s');
+
+	// probe data for types
+	firstRows.forEach(r => {
+		r.forEach((val, colIdx) => {
+			if (!Number.isNaN(+val))
+				schema.cols.types[colIdx] = 'n';
+		/*
+			else {
+				let lower = val.toLowerCase();
+
+				if (lower === 'true' || lower === 'false')
+					schema.cols.types[colIdx] = 'b';
+			}
+		*/
+		});
+	});
+
+	return schema;
 }
 
-function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
-	let rowDelimLen = rowDelim.length;
-	let rowDelimCode = rowDelim[0].charCodeAt(0);
-	let colDelimCode = colDelim[0].charCodeAt(0);
+export function parse(csvStr, schema, limit) {
+	return _parseAllTuples(csvStr, schema, limit);
+}
+
+function _parseAllTuples(csvStr, schema, limit, _maxCols) {
+	let colDelim = schema.cols.delim;
+	let rowDelim = schema.rows.delim;
+
+	let numCols = _maxCols || schema.cols.names.length;
+
+	// uses a slower regexp path for schema probing
+	let _probe = !!(_maxCols && limit);
+
+	if (!schema.quote) {
+		let rows = csvStr.split(rowDelim);
+		rows = limit ? rows.slice(0, limit) : rows;
+		return rows.map(row => row.split(colDelim));
+	}
+
+	let rowDelimLen  = rowDelim.length;
+	let rowDelimChar = rowDelim[0];
+	let colDelimChar = colDelim[0];
 
 	const takeToQuote      = new RegExp('[^"]+', 'my');
-	const takeToCommaOrEOL = new RegExp(`[^${colDelim}${rowDelim}]+`, 'my');
+	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
 
 	// 0 = no
 	// 1 = unquoted
@@ -38,16 +113,17 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 	let row = Array(numCols);
 
 	let colIdx = 0;
+	let lastColIdx = numCols - 1;
 
 	while (pos <= endPos) {
-		let c = csvStr.charCodeAt(pos);
+		let c = csvStr[pos];
 
 		if (inCol === 0) {
 			if (c === quote) {
 				inCol = 2;
 				pos += 1;
 			}
-			else if (c === colDelimCode || c === rowDelimCode) {
+			else if (c === colDelimChar || c === rowDelimChar) {
 				// PUSH MACRO START
 				row[colIdx] = v;
 				colIdx += 1;
@@ -55,8 +131,12 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 				pos += 1;
 				v = "";
 
-				if (c === rowDelimCode) {
+				if (c === rowDelimChar) {
 					rows.push(row);
+
+					if (limit && rows.length === limit)
+						return rows;
+
 					row = Array(numCols);
 					colIdx = 0;
 					pos += rowDelimLen - 1;
@@ -68,7 +148,7 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 		}
 		else if (inCol === 2) {
 			if (c === quote) {
-				if (csvStr.charCodeAt(pos + 1) === quote) {
+				if (csvStr[pos + 1] === quote) {
 					v += '"';
 					pos += 2;
 				}
@@ -78,14 +158,13 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 				}
 			}
 			else {
-				takeToQuote.lastIndex = pos;
-				let m = takeToQuote.exec(csvStr)[0];
-				v += m;
-				pos += m.length;
+				let pos2 = csvStr.indexOf(quote, pos);
+				v += csvStr.slice(pos, pos2);
+				pos = pos2;
 			}
 		}
 		else if (inCol === 1) {
-			if (c === colDelimCode || c === rowDelimCode) {
+			if (c === colDelimChar || c === rowDelimChar) {
 				// PUSH MACRO START
 				row[colIdx] = v;
 				colIdx += 1;
@@ -93,8 +172,12 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 				pos += 1;
 				v = "";
 
-				if (c === rowDelimCode) {
+				if (c === rowDelimChar) {
 					rows.push(row);
+
+					if (limit && rows.length === limit)
+						return rows;
+
 					row = Array(numCols);
 					colIdx = 0;
 					pos += rowDelimLen - 1;
@@ -104,10 +187,27 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 				inCol = 0;
 			}
 			else {
-				takeToCommaOrEOL.lastIndex = pos;
-				let m = takeToCommaOrEOL.exec(csvStr)[0];
-				v += m;
-				pos += m.length;
+				if (_probe) {
+					takeToCommaOrEOL.lastIndex = pos;
+					let m = takeToCommaOrEOL.exec(csvStr)[0];
+					v += m;
+					pos += m.length;  // rowdelim when - 1
+				}
+				else {
+					let pos2;
+
+					if (colIdx === lastColIdx) {
+						pos2 = csvStr.indexOf(rowDelim, pos);
+
+						if (pos2 === -1)
+							pos2 = csvStr.length;
+					}
+					else
+						pos2 = csvStr.indexOf(colDelim, pos);
+
+					v += csvStr.slice(pos, pos2);
+					pos = pos2;
+				}
 			}
 		}
 	}
@@ -117,3 +217,8 @@ function _parse(csvStr, numCols = 500, rowDelim = '\n', colDelim = ',') {
 
 	return rows;
 }
+
+// const data = {
+// 	format: '',
+// 	values: []
+// };
