@@ -1,6 +1,6 @@
 ## 𝌠 μCSV
 
-A modern, [fast](#performance), [~2 KB min](https://github.com/leeoniya/uCSV/tree/master/dist/uCSV.iife.min.js) CSV parser _(MIT Licensed)_
+A modern, [fast](#performance), [~2 KB min](https://github.com/leeoniya/uCSV/tree/main/dist/uCSV.iife.min.js) CSV parser _(MIT Licensed)_
 
 ---
 ### Introduction

@@ -31,7 +31,14 @@
   },
   "homepage": "https://github.com/leeoniya/uCSV#readme",
   "devDependencies": {
+    "@fast-csv/parse": "^4.3.6",
     "@rollup/plugin-terser": "^0.4.3",
-    "rollup": "^3.23.0"
+    "comma-separated-values": "^3.6.4",
+    "csv-parse": "^5.4.0",
+    "csv-parser": "^3.0.0",
+    "csvtojson": "^2.0.10",
+    "papaparse": "^5.4.1",
+    "rollup": "^3.24.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
   }
 }

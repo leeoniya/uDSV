@@ -13,8 +13,6 @@ const tab   = '\t';
 const pipe  = '|';
 const semi  = ';';
 
-const countQuotes = str => str.match(/"/g)?.length ?? 0;
-
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 
 // schema guesser
@@ -34,13 +32,7 @@ function schema(csvStr) {
 	);
 
 	// TODO: detect single quotes?
-	let hasQuotes = countQuotes(firstRowStr) > 1;
-
-	// probe 2500 data chars for quotes
-	if (!hasQuotes) {
-		let from = firstRowMatch.index;
-		hasQuotes = countQuotes(csvStr.slice(from, from + 2500)) > 1;
-	}
+	let hasQuotes = csvStr.indexOf('"') > -1;
 
 	const schema = {
 		quote: hasQuotes ? quote : '',
@@ -95,15 +87,28 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 	// uses a slower regexp path for schema probing
 	let _probe = !!(_maxCols && limit);
 
+	let rowDelimLen  = rowDelim.length;
+
 	if (!schema.quote) {
-		let rows = csvStr.split(rowDelim);
-		rows = limit ? rows.slice(0, limit) : rows;
-		return rows.map(row => row.split(colDelim));
+		let rows = [];
+
+		let pos = 0;
+		let idx = -1;
+
+		while ((idx = csvStr.indexOf(rowDelim, pos)) > -1) {
+			rows.push(csvStr.slice(pos, idx).split(colDelim));
+			pos = idx + rowDelimLen;
+
+			if (rows.length === limit)
+				break;
+		}
+
+		return rows;
 	}
 
-	let rowDelimLen  = rowDelim.length;
 	let rowDelimChar = rowDelim[0];
 	let colDelimChar = colDelim[0];
+
 	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
 
 	// 0 = no
@@ -224,9 +229,9 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 	return rows;
 }
 
-// const data = {
+// const parsed = {
 // 	format: '',
-// 	values: []
+// 	data: []
 // };
 
 export { parse, schema };
