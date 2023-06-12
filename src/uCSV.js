@@ -98,8 +98,9 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 		return rows;
 	}
 
-	let rowDelimChar = rowDelim[0];
-	let colDelimChar = colDelim[0];
+	let quoteChar = quote.charCodeAt(0);
+	let rowDelimChar = rowDelim.charCodeAt(0);
+	let colDelimChar = colDelim.charCodeAt(0);
 
 	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
 
@@ -119,10 +120,10 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 	let lastColIdx = numCols - 1;
 
 	while (pos <= endPos) {
-		let c = csvStr[pos];
+		let c = csvStr.charCodeAt(pos);
 
 		if (inCol === 0) {
-			if (c === quote) {
+			if (c === quoteChar) {
 				inCol = 2;
 				pos += 1;
 			}
@@ -150,9 +151,9 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 				inCol = 1;
 		}
 		else if (inCol === 2) {
-			if (c === quote) {
-				if (csvStr[pos + 1] === quote) {
-					v += '"';
+			if (c === quoteChar) {
+				if (csvStr.charCodeAt(pos + 1) === quoteChar) {
+					v += quote;
 					pos += 2;
 				}
 				else {
