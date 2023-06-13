@@ -1,11 +1,11 @@
-## 𝌠 μCSV
+## 𝌠 μDSV
 
-A modern, [fast](#performance), [~2 KB min](https://github.com/leeoniya/uCSV/tree/main/dist/uCSV.iife.min.js) CSV parser _(MIT Licensed)_
+A modern, [fast](#performance), [~2 KB min](https://github.com/leeoniya/uDSV/tree/main/dist/uDSV.iife.min.js) CSV parser _(MIT Licensed)_
 
 ---
 ### Introduction
 
-μCSV is a modern, [fast](#performance) JS library for parsing well-formed CSV files with either a synchronous or async/incremental (WIP) API.
+μDSV is a modern, [fast](#performance) JS library for parsing well-formed CSV files with either a synchronous or async/incremental (WIP) API.
 It is mostly [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180)-compliant, with support for quoted values containing commas, escaped quotes, and line breaks¹.
 The aim of this project is to handle the 99.5% use-case without adding complexity and performance trade-offs to support the remaining 0.5%.
 

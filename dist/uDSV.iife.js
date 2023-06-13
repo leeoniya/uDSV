@@ -2,12 +2,12 @@
 * Copyright (c) 2023, Leon Sorokin
 * All rights reserved. (MIT Licensed)
 *
-* uCSV.js
+* uDSV.js
 * A small, fast CSV parser
-* https://github.com/leeoniya/uCSV (v0.1.0)
+* https://github.com/leeoniya/uDSV (v0.1.0)
 */
 
-var uCSV = (function (exports) {
+var uDSV = (function (exports) {
 	'use strict';
 
 	const comma = ',';

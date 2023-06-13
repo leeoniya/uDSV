@@ -1,17 +1,17 @@
 {
-  "name": "ucsv",
+  "name": "udsv",
   "version": "0.1.0",
   "description": "A small, fast CSV parser",
-  "main": "./dist/uCSV.cjs.js",
-  "module": "./dist/uCSV.esm.js",
-  "typings": "./dist/uCSV.d.ts",
+  "main": "./dist/uDSV.cjs.js",
+  "module": "./dist/uDSV.esm.js",
+  "typings": "./dist/uDSV.d.ts",
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leeoniya/uCSV.git"
+    "url": "git+https://github.com/leeoniya/uDSV.git"
   },
   "files": [
     "package.json",
@@ -27,9 +27,9 @@
   "author": "Leon Sorokin <leeoniya@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/leeoniya/uCSV/issues"
+    "url": "https://github.com/leeoniya/uDSV/issues"
   },
-  "homepage": "https://github.com/leeoniya/uCSV#readme",
+  "homepage": "https://github.com/leeoniya/uDSV#readme",
   "devDependencies": {
     "@fast-csv/parse": "^4.3.6",
     "@rollup/plugin-terser": "^0.4.3",
@@ -43,7 +43,7 @@
     "jquery-csv": "^1.0.21",
     "neat-csv": "^7.0.0",
     "papaparse": "^5.4.1",
-    "rollup": "^3.24.1",
+    "rollup": "^3.25.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz",
     "ya-csv": "^1.0.0"
   }

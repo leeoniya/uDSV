@@ -10,20 +10,20 @@ const fs = require('fs');
 // 		.replace(/\*\/\s{1,}/g,"*/");
 // }
 
-// let minicss = cssmin(fs.readFileSync('./src/uCSV.css', 'utf8'));
-// fs.writeFileSync('./dist/uCSV.min.css', minicss);
+// let minicss = cssmin(fs.readFileSync('./src/uDSV.css', 'utf8'));
+// fs.writeFileSync('./dist/uDSV.min.css', minicss);
 
 import terser from '@rollup/plugin-terser';
 
 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const ver = "v" + pkg.version;
-const urlVer = "https://github.com/leeoniya/uCSV (" + ver + ")";
+const urlVer = "https://github.com/leeoniya/uDSV (" + ver + ")";
 const banner = [
 	"/**",
 	"* Copyright (c) " + new Date().getFullYear() + ", Leon Sorokin",
 	"* All rights reserved. (MIT Licensed)",
 	"*",
-	"* uCSV.js",
+	"* uDSV.js",
 	"* A small, fast CSV parser",
 	"* " + urlVer,
 	"*/",
@@ -34,13 +34,13 @@ function bannerlessESM() {
 	return {
 		name: 'stripBanner',
 		resolveId(importee) {
-			if (importee == 'uCSV')
+			if (importee == 'uDSV')
 				return importee;
 			return null;
 		},
 		load(id) {
-			if (id == 'uCSV')
-				return fs.readFileSync('./dist/uCSV.esm.js', 'utf8').replace(/\/\*\*.*?\*\//gms, '');
+			if (id == 'uDSV')
+				return fs.readFileSync('./dist/uDSV.esm.js', 'utf8').replace(/\/\*\*.*?\*\//gms, '');
 			return null;
 		}
 	};
@@ -64,29 +64,29 @@ const terserOpts = {
 
 export default [
 	{
-		input: './src/uCSV.js',
+		input: './src/uDSV.js',
 		output: {
-			name: 'uCSV',
-			file: './dist/uCSV.esm.js',
+			name: 'uDSV',
+			file: './dist/uDSV.esm.js',
 			format: 'es',
 			banner,
 		},
 	},
 	{
-		input: './src/uCSV.js',
+		input: './src/uDSV.js',
 		output: {
-			name: 'uCSV',
-			file: './dist/uCSV.cjs.js',
+			name: 'uDSV',
+			file: './dist/uDSV.cjs.js',
 			format: 'cjs',
 			exports: "auto",
 			banner,
 		},
 	},
 	{
-		input: 'uCSV',
+		input: 'uDSV',
 		output: {
-			name: 'uCSV',
-			file: './dist/uCSV.iife.js',
+			name: 'uDSV',
+			file: './dist/uDSV.iife.js',
 			format: 'iife',
 			esModule: false,
 			banner,
@@ -96,10 +96,10 @@ export default [
 		]
 	},
 	{
-		input: 'uCSV',
+		input: 'uDSV',
 		output: {
-			name: 'uCSV',
-			file: './dist/uCSV.iife.min.js',
+			name: 'uDSV',
+			file: './dist/uDSV.iife.min.js',
 			format: 'iife',
 			esModule: false,
 			banner: "/*! " + urlVer + " */",
