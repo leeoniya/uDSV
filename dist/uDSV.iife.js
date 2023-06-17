@@ -137,6 +137,8 @@ var uDSV = (function (exports) {
 				if (c === quoteChar) {
 					inCol = 2;
 					pos += 1;
+
+					c = csvStr.charCodeAt(pos);
 				}
 				else if (c === colDelimChar || c === rowDelimChar) {
 					// PUSH MACRO START
@@ -157,11 +159,14 @@ var uDSV = (function (exports) {
 						pos += rowDelimLen - 1;
 					}
 					// PUSH MACRO END
+
+					c = csvStr.charCodeAt(pos);
 				}
 				else
 					inCol = 1;
 			}
-			else if (inCol === 2) {
+
+			if (inCol === 2) {
 				if (c === quoteChar) {
 					if (csvStr.charCodeAt(pos + 1) === quoteChar) {
 						v += quote;
