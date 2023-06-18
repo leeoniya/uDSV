@@ -32,7 +32,7 @@ var uDSV = (function (exports) {
 		const colDelim      = COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1);
 
 		// TODO: detect single quotes?
-		let hasQuotes = csvStr.indexOf('"') > -1;
+		let hasQuotes = csvStr.indexOf(quote) > -1;
 
 		const schema = {
 			quote: hasQuotes ? quote : '',
