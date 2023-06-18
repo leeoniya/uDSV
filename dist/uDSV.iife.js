@@ -50,7 +50,7 @@ var uDSV = (function (exports) {
 
 		const _maxCols = firstRowStr.split(colDelim).length + 1;
 		const firstRows = [];
-		parse(csvStr, schema, limit, chunk => firstRows.push(...chunk), _maxCols);
+		parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, _maxCols);
 		const header = Object.keys(firstRows.shift());
 		schema.cols.names = header; // todo: trim?
 		schema.cols.types = Array(header.length).fill('s');
@@ -74,14 +74,15 @@ var uDSV = (function (exports) {
 		return schema;
 	}
 
-	function parse(csvStr, schema, limit, cb, _maxCols) {
+	function parse(csvStr, schema, cb, limit, _maxCols) {
 		let colDelim = schema.cols.delim;
 		let rowDelim = schema.rows.delim;
 
 		let numCols = _maxCols || schema.cols.names.length;
 
+		let _limit = limit != null;
 		// uses a slower regexp path for schema probing
-		let _probe = !!(_maxCols && limit);
+		let _probe = _maxCols != null && _limit;
 
 		let rowDelimLen  = rowDelim.length;
 
@@ -95,7 +96,7 @@ var uDSV = (function (exports) {
 				rows.push(csvStr.slice(pos, idx).split(colDelim));
 				pos = idx + rowDelimLen;
 
-				if (limit && rows.length === limit)
+				if (_limit && rows.length === limit)
 					break;
 
 				if (rows.length === CHUNK_SIZE) {
@@ -114,6 +115,7 @@ var uDSV = (function (exports) {
 		let rowDelimChar = rowDelim.charCodeAt(0);
 		let colDelimChar = colDelim.charCodeAt(0);
 
+		// should this be * to handle ,, ?
 		const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
 
 		// 0 = no
@@ -152,7 +154,7 @@ var uDSV = (function (exports) {
 					if (c === rowDelimChar) {
 						rows.push(row);
 
-						if (limit && rows.length === limit) {
+						if (_limit && rows.length === limit) {
 							cb(rows);
 							return;
 						}
@@ -203,7 +205,7 @@ var uDSV = (function (exports) {
 					if (c === rowDelimChar) {
 						rows.push(row);
 
-						if (limit && rows.length === limit) {
+						if (_limit && rows.length === limit) {
 							cb(rows);
 							return;
 						}

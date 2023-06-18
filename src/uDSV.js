@@ -39,7 +39,7 @@ export function schema(csvStr, limit = 10) {
 
 	const _maxCols = firstRowStr.split(colDelim).length + 1;
 	const firstRows = [];
-	parse(csvStr, schema, limit, chunk => firstRows.push(...chunk), _maxCols);
+	parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, _maxCols);
 	const header = Object.keys(firstRows.shift());
 	schema.cols.names = header; // todo: trim?
 	schema.cols.types = Array(header.length).fill('s');
@@ -63,14 +63,15 @@ export function schema(csvStr, limit = 10) {
 	return schema;
 }
 
-export function parse(csvStr, schema, limit, cb, _maxCols) {
+export function parse(csvStr, schema, cb, limit, _maxCols) {
 	let colDelim = schema.cols.delim;
 	let rowDelim = schema.rows.delim;
 
 	let numCols = _maxCols || schema.cols.names.length;
 
+	let _limit = limit != null;
 	// uses a slower regexp path for schema probing
-	let _probe = !!(_maxCols && limit);
+	let _probe = _maxCols != null && _limit;
 
 	let rowDelimLen  = rowDelim.length;
 
@@ -84,7 +85,7 @@ export function parse(csvStr, schema, limit, cb, _maxCols) {
 			rows.push(csvStr.slice(pos, idx).split(colDelim));
 			pos = idx + rowDelimLen;
 
-			if (limit && rows.length === limit)
+			if (_limit && rows.length === limit)
 				break;
 
 			if (rows.length === CHUNK_SIZE) {
@@ -103,6 +104,7 @@ export function parse(csvStr, schema, limit, cb, _maxCols) {
 	let rowDelimChar = rowDelim.charCodeAt(0);
 	let colDelimChar = colDelim.charCodeAt(0);
 
+	// should this be * to handle ,, ?
 	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
 
 	// 0 = no
@@ -141,7 +143,7 @@ export function parse(csvStr, schema, limit, cb, _maxCols) {
 				if (c === rowDelimChar) {
 					rows.push(row);
 
-					if (limit && rows.length === limit) {
+					if (_limit && rows.length === limit) {
 						cb(rows);
 						return;
 					}
@@ -192,7 +194,7 @@ export function parse(csvStr, schema, limit, cb, _maxCols) {
 				if (c === rowDelimChar) {
 					rows.push(row);
 
-					if (limit && rows.length === limit) {
+					if (_limit && rows.length === limit) {
 						cb(rows);
 						return;
 					}
