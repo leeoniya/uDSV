@@ -13,6 +13,8 @@ const tab   = '\t';
 const pipe  = '|';
 const semi  = ';';
 
+const CHUNK_SIZE = 5e3;
+
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 
 // schema guesser
@@ -50,7 +52,8 @@ function schema(csvStr) {
 
 	const _maxCols = firstRowStr.match(new RegExp(colDelim, 'g')).length + 1;
 	const limit = 10;
-	const firstRows = _parseAllTuples(csvStr, schema, limit, _maxCols);
+	const firstRows = [];
+	_parseEachTuples(csvStr, schema, limit, _maxCols, chunk => firstRows.push(...chunk));
 	const header = Object.keys(firstRows.shift());
 	schema.cols.names = header; // todo: trim?
 	schema.cols.types = Array(header.length).fill('s');
@@ -74,11 +77,11 @@ function schema(csvStr) {
 	return schema;
 }
 
-function parse(csvStr, schema, limit) {
-	return _parseAllTuples(csvStr, schema, limit);
+function parse(csvStr, schema, limit, cb) {
+	return _parseEachTuples(csvStr, schema, limit, null, cb);
 }
 
-function _parseAllTuples(csvStr, schema, limit, _maxCols) {
+function _parseEachTuples(csvStr, schema, limit, _maxCols, cb) {
 	let colDelim = schema.cols.delim;
 	let rowDelim = schema.rows.delim;
 
@@ -99,11 +102,18 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 			rows.push(csvStr.slice(pos, idx).split(colDelim));
 			pos = idx + rowDelimLen;
 
-			if (rows.length === limit)
+			if (limit && rows.length === limit) {
+				cb(rows);
 				break;
+			}
+
+			if (rows.length === CHUNK_SIZE) {
+				cb(rows);
+				rows = [];
+			}
 		}
 
-		return rows;
+		return;
 	}
 
 	let quoteChar = quote.charCodeAt(0);
@@ -148,8 +158,15 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 				if (c === rowDelimChar) {
 					rows.push(row);
 
-					if (limit && rows.length === limit)
-						return rows;
+					if (limit && rows.length === limit) {
+						cb(rows);
+						return;
+					}
+
+					if (rows.length === CHUNK_SIZE) {
+						cb(rows);
+						rows = [];
+					}
 
 					row = Array(numCols);
 					colIdx = 0;
@@ -192,8 +209,15 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 				if (c === rowDelimChar) {
 					rows.push(row);
 
-					if (limit && rows.length === limit)
-						return rows;
+					if (limit && rows.length === limit) {
+						cb(rows);
+						return;
+					}
+
+					if (rows.length === 5e3) {
+						cb(rows);
+						rows = [];
+					}
 
 					row = Array(numCols);
 					colIdx = 0;
@@ -231,8 +255,7 @@ function _parseAllTuples(csvStr, schema, limit, _maxCols) {
 
 	row[colIdx] = v;
 	rows.push(row);
-
-	return rows;
+	cb(rows);
 }
 
 // const parsed = {
