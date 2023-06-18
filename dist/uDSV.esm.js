@@ -45,7 +45,7 @@ function schema(csvStr, limit = 10) {
 
 	// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
-	const _maxCols = firstRowStr.split(colDelim).length + 1;
+	const _maxCols = firstRowStr.split(colDelim).length;
 	const firstRows = [];
 	parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, _maxCols);
 	const header = Object.keys(firstRows.shift());
@@ -81,7 +81,7 @@ function parse(csvStr, schema, cb, limit, _maxCols) {
 	// uses a slower regexp path for schema probing
 	let _probe = _maxCols != null && _limit;
 
-	let rowDelimLen  = rowDelim.length;
+	let rowDelimLen = rowDelim.length;
 
 	if (!schema.quote) {
 		let rows = [];

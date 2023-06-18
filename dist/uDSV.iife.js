@@ -48,7 +48,7 @@ var uDSV = (function (exports) {
 
 		// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
-		const _maxCols = firstRowStr.split(colDelim).length + 1;
+		const _maxCols = firstRowStr.split(colDelim).length;
 		const firstRows = [];
 		parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, _maxCols);
 		const header = Object.keys(firstRows.shift());
@@ -84,7 +84,7 @@ var uDSV = (function (exports) {
 		// uses a slower regexp path for schema probing
 		let _probe = _maxCols != null && _limit;
 
-		let rowDelimLen  = rowDelim.length;
+		let rowDelimLen = rowDelim.length;
 
 		if (!schema.quote) {
 			let rows = [];
