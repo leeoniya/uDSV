@@ -133,8 +133,10 @@ var uDSV = (function (exports) {
 		let colIdx = 0;
 		let lastColIdx = numCols - 1;
 
+		let c;
+
 		while (pos <= endPos) {
-			let c = csvStr.charCodeAt(pos);
+			c = csvStr.charCodeAt(pos);
 
 			if (inCol === 0) {
 				if (c === quoteChar) {
