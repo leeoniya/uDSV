@@ -32,9 +32,13 @@
   "homepage": "https://github.com/leeoniya/uDSV#readme",
   "devDependencies": {
     "@fast-csv/parse": "^4.3.6",
+    "@gregoranders/csv": "^0.0.12",
     "@rollup/plugin-terser": "^0.4.3",
+    "@vanillaes/csv": "^3.0.1",
     "benchmark": "^2.1.4",
+    "but-csv": "^2.0.14",
     "comma-separated-values": "^3.6.4",
+    "csv-js": "^1.0.0",
     "csv-parse": "^5.4.0",
     "csv-parser": "^3.0.0",
     "csvtojson": "^2.0.10",
