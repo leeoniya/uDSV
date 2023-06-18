@@ -13,25 +13,20 @@ const tab   = '\t';
 const pipe  = '|';
 const semi  = ';';
 
+const COL_DELIMS = [tab, pipe, semi, comma];
 const CHUNK_SIZE = 5e3;
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 
 // schema guesser
-function schema(csvStr) {
+function schema(csvStr, limit = 10) {
 	// will fail if header contains line breaks in quoted value
 	// will fail if single line without line breaks
 	const firstRowMatch = csvStr.match(/(.*)(\r?\n?)/);
 
 	const firstRowStr   = firstRowMatch[1];
 	const rowDelim      = firstRowMatch[2];
-	const colDelim      = (
-		firstRowStr.indexOf(tab)  > -1 ? tab  :
-		firstRowStr.indexOf(pipe) > -1 ? pipe :
-		firstRowStr.indexOf(semi) > -1 ? semi :
-	//	firstRowStr.indexOf(colo) > -1 ? colo :
-		comma
-	);
+	const colDelim      = COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1);
 
 	// TODO: detect single quotes?
 	let hasQuotes = csvStr.indexOf('"') > -1;
@@ -50,10 +45,9 @@ function schema(csvStr) {
 
 	// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
-	const _maxCols = firstRowStr.match(new RegExp(colDelim, 'g')).length + 1;
-	const limit = 10;
+	const _maxCols = firstRowStr.split(colDelim).length + 1;
 	const firstRows = [];
-	_parseEachTuples(csvStr, schema, limit, _maxCols, chunk => firstRows.push(...chunk));
+	parse(csvStr, schema, limit, chunk => firstRows.push(...chunk), _maxCols);
 	const header = Object.keys(firstRows.shift());
 	schema.cols.names = header; // todo: trim?
 	schema.cols.types = Array(header.length).fill('s');
@@ -77,11 +71,7 @@ function schema(csvStr) {
 	return schema;
 }
 
-function parse(csvStr, schema, limit, cb) {
-	return _parseEachTuples(csvStr, schema, limit, null, cb);
-}
-
-function _parseEachTuples(csvStr, schema, limit, _maxCols, cb) {
+function parse(csvStr, schema, limit, cb, _maxCols) {
 	let colDelim = schema.cols.delim;
 	let rowDelim = schema.rows.delim;
 
@@ -102,16 +92,17 @@ function _parseEachTuples(csvStr, schema, limit, _maxCols, cb) {
 			rows.push(csvStr.slice(pos, idx).split(colDelim));
 			pos = idx + rowDelimLen;
 
-			if (limit && rows.length === limit) {
-				cb(rows);
+			if (limit && rows.length === limit)
 				break;
-			}
 
 			if (rows.length === CHUNK_SIZE) {
 				cb(rows);
 				rows = [];
 			}
 		}
+
+		if (rows.length > 0)
+			cb(rows);
 
 		return;
 	}
