@@ -199,7 +199,7 @@ export function parse(csvStr, schema, cb, limit, _maxCols) {
 						return;
 					}
 
-					if (rows.length === 5e3) {
+					if (rows.length === CHUNK_SIZE) {
 						cb(rows);
 						rows = [];
 					}
