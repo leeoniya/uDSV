@@ -35,7 +35,7 @@ var uDSV = (function (exports) {
 		let hasQuotes = csvStr.indexOf(quote) > -1;
 
 		const schema = {
-			quote: hasQuotes ? quote : '',
+			quote: hasQuotes ? quote : null,
 			cols: {
 				delim: colDelim,
 				names: [],
@@ -50,7 +50,7 @@ var uDSV = (function (exports) {
 
 		const _maxCols = firstRowStr.split(colDelim).length;
 		const firstRows = [];
-		parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, _maxCols);
+		parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, 1, _maxCols);
 		const header = Object.keys(firstRows.shift());
 		schema.cols.names = header; // todo: trim?
 		schema.cols.types = Array(header.length).fill('s');
@@ -74,19 +74,21 @@ var uDSV = (function (exports) {
 		return schema;
 	}
 
-	function parse(csvStr, schema, cb, limit, _maxCols) {
+	function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
 		let colDelim = schema.cols.delim;
 		let rowDelim = schema.rows.delim;
 
 		let numCols = _maxCols || schema.cols.names.length;
 
-		let _limit = limit != null;
+		let _limit = chunkLimit != null;
 		// uses a slower regexp path for schema probing
 		let _probe = _maxCols != null && _limit;
 
 		let rowDelimLen = rowDelim.length;
 
-		if (!schema.quote) {
+		let numChunks = 0;
+
+		if (schema.quote == null) {
 			let rows = [];
 
 			let pos = 0;
@@ -96,12 +98,12 @@ var uDSV = (function (exports) {
 				rows.push(csvStr.slice(pos, idx).split(colDelim));
 				pos = idx + rowDelimLen;
 
-				if (_limit && rows.length === limit)
-					break;
-
-				if (rows.length === CHUNK_SIZE) {
+				if (rows.length === chunkSize) {
 					cb(rows);
 					rows = [];
+
+					if (_limit && ++numChunks === chunkLimit)
+						break;
 				}
 			}
 
@@ -156,14 +158,12 @@ var uDSV = (function (exports) {
 					if (c === rowDelimChar) {
 						rows.push(row);
 
-						if (_limit && rows.length === limit) {
-							cb(rows);
-							return;
-						}
-
-						if (rows.length === CHUNK_SIZE) {
+						if (rows.length === chunkSize) {
 							cb(rows);
 							rows = [];
+
+							if (_limit && ++numChunks === chunkLimit)
+								return;
 						}
 
 						row = Array(numCols);
@@ -207,14 +207,12 @@ var uDSV = (function (exports) {
 					if (c === rowDelimChar) {
 						rows.push(row);
 
-						if (_limit && rows.length === limit) {
-							cb(rows);
-							return;
-						}
-
-						if (rows.length === CHUNK_SIZE) {
+						if (rows.length === chunkSize) {
 							cb(rows);
 							rows = [];
+
+							if (_limit && ++numChunks === chunkLimit)
+								return;
 						}
 
 						row = Array(numCols);
