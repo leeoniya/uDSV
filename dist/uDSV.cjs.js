@@ -178,20 +178,29 @@ function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = null, _m
 		}
 
 		if (inCol === 2) {
-			if (c === quoteChar) {
-				if (csvStr.charCodeAt(pos + 1) === quoteChar) {
-					v += quote;
-					pos += 2;
+			while (1) {
+				if (c === quoteChar) {
+					let cNext  = csvStr.charCodeAt(pos + 1);
+
+					if (cNext === quoteChar) {
+						v += quote;
+						pos += 2;
+						c = csvStr.charCodeAt(pos);
+					}
+					else {
+						inCol = 0;
+						pos += 1;
+						// we have the next char, so can technically skip the redundant charCodeAt at top of loop, but tricky
+					//	c = cNext;
+						break;
+					}
 				}
 				else {
-					inCol = 0;
-					pos += 1;
+					let pos2 = csvStr.indexOf(quote, pos);
+					v += csvStr.slice(pos, pos2);
+					pos = pos2;
+					c = quoteChar;
 				}
-			}
-			else {
-				let pos2 = csvStr.indexOf(quote, pos);
-				v += csvStr.slice(pos, pos2);
-				pos = pos2;
 			}
 		}
 		else if (inCol === 1) {
