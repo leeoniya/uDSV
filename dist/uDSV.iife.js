@@ -181,7 +181,7 @@ var uDSV = (function (exports) {
 			if (inCol === 2) {
 				while (1) {
 					if (c === quoteChar) {
-						let cNext  = csvStr.charCodeAt(pos + 1);
+						let cNext = csvStr.charCodeAt(pos + 1);
 
 						if (cNext === quoteChar) {
 							v += quote;

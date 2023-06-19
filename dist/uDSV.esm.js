@@ -178,7 +178,7 @@ function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = null, _m
 		if (inCol === 2) {
 			while (1) {
 				if (c === quoteChar) {
-					let cNext  = csvStr.charCodeAt(pos + 1);
+					let cNext = csvStr.charCodeAt(pos + 1);
 
 					if (cNext === quoteChar) {
 						v += quote;
