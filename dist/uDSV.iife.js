@@ -16,13 +16,83 @@ var uDSV = (function (exports) {
 	const pipe  = '|';
 	const semi  = ';';
 
+	const ISO8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2})$/;
+
 	const COL_DELIMS = [tab, pipe, semi, comma];
 	const CHUNK_SIZE = 5e3;
+
+	function genToTypedFn(cols, rows, objs = false) {
+		let buf = objs ? '{' : '';
+
+		// todo, get this from schema assertion
+		cols.forEach((col, ci) => {
+			buf += objs ? `"${col}":` : '';
+
+			let rv = `r[${ci}]`;
+
+			let parseVal = rv;
+
+			// row with to analyze
+			let row = rows.find(r => r[ci] != null & r[ci] !== ''); // trim()?
+
+			if (row != null) {
+				let v = row[ci]; // trim()?
+
+				// dates
+				if (ISO8601.test(v))
+					parseVal = `new Date(${rv})`;
+				// numbers
+				else if (!Number.isNaN(Number.parseFloat(v)))
+					parseVal = `Number.parseFloat(${rv})`;
+				// bools
+				else if (/^(?:true|false)$/i.test(v))
+					parseVal = `${rv}.toLowerCase() === 'true' ? true : false`;
+				// json
+				else if (v[0] === '[' || v[0] === '{') {
+					try {
+						JSON.parse(v);
+						parseVal = `JSON.parse(${rv})`;
+					} catch {}
+				}
+			}
+
+			let orActualUndef = `|| ${rv} == null`; // TODO: this should not happen (should be empty str?)
+			let empty = `${rv} === '' ${orActualUndef} ? undefined : ${rv} === 'null' ? null : `;
+
+			// let empty = `${rv} === '' ? undefined : `;  // trim()?
+
+			buf += objs ? `${empty} ${parseVal},` : `${rv} = ${empty} ${parseVal};`;
+		});
+
+		buf += objs ? '}' : '';
+
+		let initArr = objs ? `Array(rows.length)` : 'rows';
+		let assign = objs ? `arr[i] = ${buf}` : buf;
+
+		let fnBody = `
+		let arr = ${initArr};
+
+		for (let i = 0; i < rows.length; i++) {
+			let r = rows[i];   // trim()?
+			${assign}
+		}
+
+		return arr;
+	`;
+
+		let toObjFn = new Function('rows', fnBody);
+
+		// console.log(fnBody);
+		// console.log(toObjFn(chunk.slice(1, 5)));
+		// process.exit();
+
+		return toObjFn;
+	}
 
 	// https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 
 	// schema guesser
-	function schema(csvStr, limit = 10) {
+	function schema(csvStr, limit = 10, typedObjs = false) {
 		// will fail if header contains line breaks in quoted value
 		// will fail if single line without line breaks
 		const firstRowMatch = csvStr.match(/(.*)(\r?\n?)/);
@@ -44,6 +114,7 @@ var uDSV = (function (exports) {
 			rows: {
 				delim: rowDelim,
 			},
+			toTyped: null,
 		};
 
 		// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
@@ -51,7 +122,7 @@ var uDSV = (function (exports) {
 		const _maxCols = firstRowStr.split(colDelim).length;
 		const firstRows = [];
 		parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, 1, _maxCols);
-		const header = Object.keys(firstRows.shift());
+		const header = Object.values(firstRows.shift());
 		schema.cols.names = header; // todo: trim?
 		schema.cols.types = Array(header.length).fill('s');
 
@@ -70,6 +141,8 @@ var uDSV = (function (exports) {
 			*/
 			});
 		});
+
+		schema.toTyped = genToTypedFn(header, firstRows, typedObjs);
 
 		return schema;
 	}
@@ -99,16 +172,16 @@ var uDSV = (function (exports) {
 				pos = idx + rowDelimLen;
 
 				if (rows.length === chunkSize) {
-					cb(rows);
+					cb(rows, numChunks++);
 					rows = [];
 
-					if (_limit && ++numChunks === chunkLimit)
+					if (_limit && numChunks === chunkLimit)
 						break;
 				}
 			}
 
 			if (rows.length > 0)
-				cb(rows);
+				cb(rows, numChunks++);
 
 			return;
 		}
@@ -159,10 +232,10 @@ var uDSV = (function (exports) {
 						rows.push(row);
 
 						if (rows.length === chunkSize) {
-							cb(rows);
+							cb(rows, numChunks++);
 							rows = [];
 
-							if (_limit && ++numChunks === chunkLimit)
+							if (_limit && numChunks === chunkLimit)
 								return;
 						}
 
@@ -217,10 +290,10 @@ var uDSV = (function (exports) {
 						rows.push(row);
 
 						if (rows.length === chunkSize) {
-							cb(rows);
+							cb(rows, numChunks++);
 							rows = [];
 
-							if (_limit && ++numChunks === chunkLimit)
+							if (_limit && numChunks === chunkLimit)
 								return;
 						}
 
@@ -260,7 +333,7 @@ var uDSV = (function (exports) {
 
 		row[colIdx] = v;
 		rows.push(row);
-		cb(rows);
+		cb(rows, numChunks++);
 	}
 
 	exports.parse = parse;
