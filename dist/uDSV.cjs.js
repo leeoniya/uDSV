@@ -21,7 +21,7 @@ const COL_DELIMS = [tab, pipe, semi, comma];
 const CHUNK_SIZE = 5e3;
 
 function genToTypedFn(cols, rows, objs = false) {
-	let buf = objs ? '{' : '';
+	let buf = objs ? '{' : '[';
 
 	// todo, get this from schema assertion
 	cols.forEach((col, ci) => {
@@ -60,20 +60,17 @@ function genToTypedFn(cols, rows, objs = false) {
 
 		// let empty = `${rv} === '' ? undefined : `;  // trim()?
 
-		buf += objs ? `${empty} ${parseVal},` : `${rv} = ${empty} ${parseVal};`;
+		buf += `${empty} ${parseVal},`;
 	});
 
-	buf += objs ? '}' : '';
-
-	let initArr = objs ? `Array(rows.length)` : 'rows';
-	let assign = objs ? `arr[i] = ${buf}` : buf;
+	buf += objs ? '}' : ']';
 
 	let fnBody = `
-		let arr = ${initArr};
+		let arr = Array(rows.length);
 
 		for (let i = 0; i < rows.length; i++) {
 			let r = rows[i];   // trim()?
-			${assign}
+			arr[i] = ${buf};
 		}
 
 		return arr;

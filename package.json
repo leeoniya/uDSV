@@ -33,6 +33,7 @@
   "devDependencies": {
     "@fast-csv/parse": "^4.3.6",
     "@gregoranders/csv": "^0.0.12",
+    "@lukaswagner/csv-parser": "^0.3.0",
     "@rollup/plugin-terser": "^0.4.3",
     "@vanillaes/csv": "^3.0.1",
     "benchmark": "^2.1.4",
