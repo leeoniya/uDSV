@@ -78,7 +78,10 @@ function genToTypedFn(cols, rows, objs = false) {
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 
 // schema guesser
-export function schema(csvStr, limit = 10, typedObjs = false) {
+export function schema(csvStr, limit, typedObjs) {
+	limit ??= 10;
+	typedObjs ??= false;
+
 	// will fail if header contains line breaks in quoted value
 	// will fail if single line without line breaks
 	const firstRowMatch = csvStr.match(/(.*)(\r?\n?)/);
@@ -95,7 +98,7 @@ export function schema(csvStr, limit = 10, typedObjs = false) {
 		cols: {
 			delim: colDelim,
 			names: [],
-			types: [], // ['s','n','b','e'], // enums?
+		//	types: [], // ['s','n','b','e'], // enums?
 		},
 		rows: {
 			delim: rowDelim,
@@ -110,23 +113,23 @@ export function schema(csvStr, limit = 10, typedObjs = false) {
 	parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, 1, _maxCols);
 	const header = Object.values(firstRows.shift());
 	schema.cols.names = header; // todo: trim?
-	schema.cols.types = Array(header.length).fill('s');
+//	schema.cols.types = Array(header.length).fill('s');
 
+/*
 	// probe data for types
 	firstRows.forEach(r => {
 		r.forEach((val, colIdx) => {
 			if (!Number.isNaN(+val))
 				schema.cols.types[colIdx] = 'n';
-		/*
 			else {
-				let lower = val.toLowerCase();
+			//	let lower = val.toLowerCase();
 
-				if (lower === 'true' || lower === 'false')
-					schema.cols.types[colIdx] = 'b';
+			//	if (lower === 'true' || lower === 'false')
+			//		schema.cols.types[colIdx] = 'b';
 			}
-		*/
 		});
 	});
+*/
 
 	schema.toTyped = genToTypedFn(header, firstRows, typedObjs);
 
