@@ -149,7 +149,7 @@ export function schema(csvStr, limit) {
 	const _maxCols = firstRowStr.split(colDelim).length;
 	const firstRows = [];
 	parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, 1, _maxCols);
-	const header = Object.values(firstRows.shift());
+	const header = firstRows.shift().filter(v => v !== '');
 	schema.cols.names = header; // todo: trim?
 //	schema.cols.types = Array(header.length).fill('s');
 
