@@ -21,7 +21,7 @@ function genToTypedRows(cols, rows, objs = false) {
 
 		let parseVal = rv;
 
-		// row with to analyze
+		// row with a value to analyze
 		let row = rows.find(r => r[ci] != null && r[ci] !== ''); // trim()?
 
 		if (row != null) {
@@ -33,11 +33,18 @@ function genToTypedRows(cols, rows, objs = false) {
 			// numbers
 			else if (!Number.isNaN(Number.parseFloat(v)))
 				parseVal = `${rv} === 'NaN' ? NaN : Number.parseFloat(${rv})`;
-			// bools (yes/no? 1/0?)
-			else if (/^(?:true|false)$/i.test(v)) {
+			// bools (T/F? 1/0?)
+			else if (/^(?:true|false|yes|no)$/i.test(v)) {
+				let [c0, c1] = v;
+
 				let t =
-					v === 'TRUE' || v === 'FALSE' ? 'TRUE' :
-					v === 'True' || v === 'False' ? 'True' : 'true';
+					c0 == 't' || c0 == 'f' ? 'true' :
+					c0 == 'T' || c0 == 'F' ? (c1 == 'R' || c1 === 'A' ? 'TRUE' : 'True') :
+
+					c0 == 'y' || c0 == 'n' ? 'yes' :
+					c0 == 'Y' || c0 == 'N' ? (c1 == 'E' || c1 === 'O' ? 'YES'  : 'Yes')  :
+
+					'';
 
 				parseVal = `${rv} === '${t}' ? true : false`;
 			}
