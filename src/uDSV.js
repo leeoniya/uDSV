@@ -45,8 +45,7 @@ function genToTypedRows(cols, rows, objs = false) {
 			}
 		}
 
-		let orActualUndef = `|| ${rv} == null`; // TODO: this should not happen (should be empty str?)
-		let empty = `${rv} === '' ${orActualUndef} ? void 0 : ${rv}.length === 4 && ${rv}.toLowerCase() === 'null' ? null : `;
+		let empty = `${rv} === '' || ${rv} === 'null' || ${rv} === 'NULL' ? null : `;
 
 		// let empty = `${rv} === '' ? undefined : `;  // trim()?
 
@@ -207,6 +206,8 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 	// should this be * to handle ,, ?
 	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
 
+	const rowTpl = Array(numCols).fill('');
+
 	// 0 = no
 	// 1 = unquoted
 	// 2 = quoted
@@ -217,7 +218,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 
 	let rows = [];
 	let v = "";
-	let row = Array(numCols);
+	let row = rowTpl.slice();
 
 	let colIdx = 0;
 	let lastColIdx = numCols - 1;
@@ -253,7 +254,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 							return;
 					}
 
-					row = Array(numCols);
+					row = rowTpl.slice();
 					colIdx = 0;
 					pos += rowDelimLen - 1;
 				}
@@ -311,7 +312,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 							return;
 					}
 
-					row = Array(numCols);
+					row = rowTpl.slice();
 					colIdx = 0;
 					pos += rowDelimLen - 1;
 				}
