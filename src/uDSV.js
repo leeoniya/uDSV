@@ -33,9 +33,14 @@ function genToTypedRows(cols, rows, objs = false) {
 			// numbers
 			else if (!Number.isNaN(Number.parseFloat(v)))
 				parseVal = `${rv} === 'NaN' ? NaN : Number.parseFloat(${rv})`;
-			// bools
-			else if (/^(?:true|false)$/i.test(v))
-				parseVal = `${rv}.toLowerCase() === 'true' ? true : false`;
+			// bools (yes/no? 1/0?)
+			else if (/^(?:true|false)$/i.test(v)) {
+				let t =
+					v === 'TRUE' || v === 'FALSE' ? 'TRUE' :
+					v === 'True' || v === 'False' ? 'True' : 'true';
+
+				parseVal = `${rv} === '${t}' ? true : false`;
+			}
 			// json
 			else if (v[0] === '[' || v[0] === '{') {
 				try {
