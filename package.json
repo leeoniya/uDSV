@@ -49,7 +49,7 @@
     "jquery-csv": "^1.0.21",
     "neat-csv": "^7.0.0",
     "papaparse": "^5.4.1",
-    "rollup": "^3.26.0",
+    "rollup": "^3.27.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz",
     "ya-csv": "^1.0.0"
   }

@@ -20,7 +20,7 @@ const ISO8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}
 const COL_DELIMS = [tab, pipe, semi, comma];
 const CHUNK_SIZE = 5e3;
 
-function genToTypedFn(cols, rows, objs = false) {
+function genToTypedRows(cols, rows, objs = false) {
 	let buf = objs ? '{' : '[';
 
 	// todo, get this from schema assertion
@@ -32,7 +32,7 @@ function genToTypedFn(cols, rows, objs = false) {
 		let parseVal = rv;
 
 		// row with to analyze
-		let row = rows.find(r => r[ci] != null & r[ci] !== ''); // trim()?
+		let row = rows.find(r => r[ci] != null && r[ci] !== ''); // trim()?
 
 		if (row != null) {
 			let v = row[ci]; // trim()?
@@ -42,7 +42,7 @@ function genToTypedFn(cols, rows, objs = false) {
 				parseVal = `new Date(${rv})`;
 			// numbers
 			else if (!Number.isNaN(Number.parseFloat(v)))
-				parseVal = `Number.parseFloat(${rv})`;
+				parseVal = `${rv} === 'NaN' ? NaN : Number.parseFloat(${rv})`;
 			// bools
 			else if (/^(?:true|false)$/i.test(v))
 				parseVal = `${rv}.toLowerCase() === 'true' ? true : false`;
@@ -56,7 +56,7 @@ function genToTypedFn(cols, rows, objs = false) {
 		}
 
 		let orActualUndef = `|| ${rv} == null`; // TODO: this should not happen (should be empty str?)
-		let empty = `${rv} === '' ${orActualUndef} ? undefined : ${rv} === 'null' ? null : `;
+		let empty = `${rv} === '' ${orActualUndef} ? void 0 : ${rv}.length === 4 && ${rv}.toLowerCase() === 'null' ? null : `;
 
 		// let empty = `${rv} === '' ? undefined : `;  // trim()?
 
@@ -85,12 +85,24 @@ function genToTypedFn(cols, rows, objs = false) {
 	return toObjFn;
 }
 
+function genToCols(cols) {
+	return new Function('chunk', `
+		let cols = [${cols.map((n, i) => `Array(chunk.length)`).join(',')}];
+
+		for (let i = 0; i < chunk.length; i++) {
+			let row = chunk[i];
+			${cols.map((n, i) => `cols[${i}][i] = row[${i}]`).join(';')};
+		}
+
+		return cols;
+	`);
+}
+
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 
 // schema guesser
-function schema(csvStr, limit, typedObjs) {
+function schema(csvStr, limit) {
 	limit ??= 10;
-	typedObjs ??= false;
 
 	// will fail if header contains line breaks in quoted value
 	// will fail if single line without line breaks
@@ -103,6 +115,10 @@ function schema(csvStr, limit, typedObjs) {
 	// TODO: detect single quotes?
 	let hasQuotes = csvStr.indexOf(quote) > -1;
 
+	let _toArrs = null;
+	let _toObjs = null;
+	let _toCols = null;
+
 	const schema = {
 		quote: hasQuotes ? quote : null,
 		cols: {
@@ -113,7 +129,18 @@ function schema(csvStr, limit, typedObjs) {
 		rows: {
 			delim: rowDelim,
 		},
-		toTyped: null,
+		toArrs: (chunk) => {
+			_toArrs ??= genToTypedRows(header, firstRows, false);
+			return _toArrs(chunk);
+		},
+		toObjs: (chunk) => {
+			_toObjs ??= genToTypedRows(header, firstRows, true);
+			return _toObjs(chunk);
+		},
+		toCols: (chunk) => {
+			_toCols ??= genToCols(header);
+			return _toCols(chunk);
+		},
 	};
 
 	// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
@@ -140,8 +167,6 @@ function schema(csvStr, limit, typedObjs) {
 		});
 	});
 */
-
-	schema.toTyped = genToTypedFn(header, firstRows, typedObjs);
 
 	return schema;
 }
