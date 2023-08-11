@@ -148,7 +148,7 @@ export function schema(csvStr, limit) {
 
 	const _maxCols = firstRowStr.split(colDelim).length;
 	const firstRows = [];
-	parse(csvStr, schema, chunk => firstRows.push(...chunk), limit, 1, _maxCols);
+	parse(csvStr, schema, chunk => firstRows.push(...chunk), false, limit, 1, _maxCols);
 	const header = firstRows.shift().filter(v => v !== '');
 	schema.cols.names = header; // todo: trim?
 //	schema.cols.types = Array(header.length).fill('s');
@@ -172,9 +172,10 @@ export function schema(csvStr, limit) {
 	return schema;
 }
 
-export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
+export function parse(csvStr, schema, cb, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
 	let colDelim = schema.cols.delim;
 	let rowDelim = schema.rows.delim;
+	let quote = schema.quote ?? '';
 
 	let numCols = _maxCols || schema.cols.names.length;
 
@@ -186,32 +187,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 
 	let numChunks = 0;
 
-	if (schema.quote == null) {
-		let rows = [];
-
-		let pos = 0;
-		let idx = -1;
-
-		while ((idx = csvStr.indexOf(rowDelim, pos)) > -1) {
-			rows.push(csvStr.slice(pos, idx).split(colDelim));
-			pos = idx + rowDelimLen;
-
-			if (rows.length === chunkSize) {
-				cb(rows, numChunks++);
-				rows = [];
-
-				if (_limit && numChunks === chunkLimit)
-					break;
-			}
-		}
-
-		if (rows.length > 0)
-			cb(rows, numChunks++);
-
-		return;
-	}
-
-	let quoteChar = quote.charCodeAt(0);
+	let quoteChar = quote == '' ? 0 : quote.charCodeAt(0);
 	let rowDelimChar = rowDelim.charCodeAt(0);
 	let colDelimChar = colDelim.charCodeAt(0);
 
@@ -227,6 +203,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 
 	let pos = 0;
 	let endPos = csvStr.length - 1;
+	let linePos = 0;
 
 	let rows = [];
 	let v = "";
@@ -234,6 +211,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 
 	let colIdx = 0;
 	let lastColIdx = numCols - 1;
+	let filledColIdx = -1;
 
 	let c;
 
@@ -245,11 +223,15 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 				inCol = 2;
 				pos += 1;
 
+				if (pos > endPos)
+					break;
+
 				c = csvStr.charCodeAt(pos);
 			}
 			else if (c === colDelimChar || c === rowDelimChar) {
 				// PUSH MACRO START
 				row[colIdx] = v;
+				filledColIdx = colIdx;
 				colIdx += 1;
 
 				pos += 1;
@@ -259,7 +241,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 					rows.push(row);
 
 					if (rows.length === chunkSize) {
-						cb(rows, numChunks++);
+						cb(rows, numChunks++, '');
 						rows = [];
 
 						if (_limit && numChunks === chunkLimit)
@@ -268,9 +250,14 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 
 					row = rowTpl.slice();
 					colIdx = 0;
+					filledColIdx = -1;
 					pos += rowDelimLen - 1;
+					linePos = pos;
 				}
 				// PUSH MACRO END
+
+				if (pos > endPos)
+					break;
 
 				c = csvStr.charCodeAt(pos);
 			}
@@ -279,13 +266,24 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 		}
 
 		if (inCol === 2) {
-			while (1) {
+			while (true) {
 				if (c === quoteChar) {
+					if (pos + 1 > endPos) { // TODO: test with chunk ending in closing ", even at EOL but not EOF
+						pos = endPos + 1;
+						break;
+					}
+
 					let cNext = csvStr.charCodeAt(pos + 1);
 
 					if (cNext === quoteChar) {
 						v += quote;
 						pos += 2;
+
+						if (pos > endPos) {
+							pos = endPos + 1;
+							break;
+						}
+
 						c = csvStr.charCodeAt(pos);
 					}
 					else {
@@ -298,6 +296,12 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 				}
 				else {
 					let pos2 = csvStr.indexOf(quote, pos);
+
+					if (pos2 === -1) {
+						pos = endPos + 1;
+						break;
+					}
+
 					v += csvStr.slice(pos, pos2);
 					pos = pos2;
 					c = quoteChar;
@@ -308,6 +312,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 			if (c === colDelimChar || c === rowDelimChar) {
 				// PUSH MACRO START
 				row[colIdx] = v;
+				filledColIdx = colIdx;
 				colIdx += 1;
 
 				pos += 1;
@@ -317,7 +322,7 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 					rows.push(row);
 
 					if (rows.length === chunkSize) {
-						cb(rows, numChunks++);
+						cb(rows, numChunks++, '');
 						rows = [];
 
 						if (_limit && numChunks === chunkLimit)
@@ -326,7 +331,9 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 
 					row = rowTpl.slice();
 					colIdx = 0;
+					filledColIdx = -1;
 					pos += rowDelimLen - 1;
+					linePos = pos;
 				}
 				// PUSH MACRO END
 
@@ -340,16 +347,10 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 					pos += m.length;  // rowdelim when - 1
 				}
 				else {
-					let pos2;
+					let pos2 = csvStr.indexOf(colIdx === lastColIdx ? rowDelim : colDelim, pos);
 
-					if (colIdx === lastColIdx) {
-						pos2 = csvStr.indexOf(rowDelim, pos);
-
-						if (pos2 === -1)
-							pos2 = csvStr.length;
-					}
-					else
-						pos2 = csvStr.indexOf(colDelim, pos);
+					if (pos2 === -1)
+						pos2 = endPos + 1;
 
 					v += csvStr.slice(pos, pos2);
 					pos = pos2;
@@ -358,9 +359,21 @@ export function parse(csvStr, schema, cb, chunkSize = CHUNK_SIZE, chunkLimit = n
 		}
 	}
 
-	row[colIdx] = v;
-	rows.push(row);
-	cb(rows, numChunks++);
+	if (withEOF && colIdx === lastColIdx) {
+		row[colIdx] = v;
+		rows.push(row);
+		inCol = 0;
+	}
+
+	let partial = !withEOF && (
+		inCol !== 0 ||
+		(
+			filledColIdx === -1 ? v !== '' :  // partial first col OR
+			filledColIdx < lastColIdx         // not all cols filled
+		)
+	);
+
+	cb(rows, numChunks++, partial ? csvStr.slice(linePos) : '');
 }
 
 // const parsed = {

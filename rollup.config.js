@@ -40,7 +40,7 @@ function bannerlessESM() {
 		},
 		load(id) {
 			if (id == 'uDSV')
-				return fs.readFileSync('./dist/uDSV.esm.js', 'utf8').replace(/\/\*\*.*?\*\//gms, '');
+				return fs.readFileSync('./dist/uDSV.mjs', 'utf8').replace(/\/\*\*.*?\*\//gms, '');
 			return null;
 		}
 	};
@@ -64,16 +64,16 @@ const terserOpts = {
 
 export default [
 	{
-		input: './src/uDSV.js',
+		input: './src/uDSV.mjs',
 		output: {
 			name: 'uDSV',
-			file: './dist/uDSV.esm.js',
+			file: './dist/uDSV.mjs',
 			format: 'es',
 			banner,
 		},
 	},
 	{
-		input: './src/uDSV.js',
+		input: './src/uDSV.mjs',
 		output: {
 			name: 'uDSV',
 			file: './dist/uDSV.cjs.js',
