@@ -157,9 +157,10 @@ var uDSV = (function (exports) {
 
 		// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
+		const sampleLen = 1024 * 8; // 8kb
 		const _maxCols = firstRowStr.split(colDelim).length;
 		const firstRows = [];
-		parse(csvStr, schema, chunk => firstRows.push(...chunk), false, limit, 1, _maxCols);
+		parse(csvStr.slice(0, sampleLen), schema, chunk => firstRows.push(...chunk), false, limit, 1, _maxCols);
 		const header = firstRows.shift();
 		schema.cols.names = header; // todo: trim?
 	//	schema.cols.types = Array(header.length).fill('s');
@@ -197,6 +198,43 @@ var uDSV = (function (exports) {
 		let rowDelimLen = rowDelim.length;
 
 		let numChunks = 0;
+
+		// this no-quote block is a 10% perf boost in V8, and 2x boost in JSC
+		// it can be fully omitted without breaking anything
+		if (quote === '') {
+			let lines = csvStr.split(rowDelim);
+
+			let partial = '';
+			let len = lines.length;
+
+			if (!withEOF) {
+				len -= 1;
+				partial = lines[len];
+			}
+
+			let rows = [];
+
+			for (let i = 0; i < len; i++) {
+				let line = lines[i];
+
+				let row = line.split(colDelim);
+
+				rows.push(row);
+
+				if (rows.length === chunkSize) {
+					cb(rows, numChunks++, '');
+					rows = [];
+
+					if (_limit && numChunks === chunkLimit)
+						return;
+				}
+			}
+
+			if (rows.length > 0 || partial !== '')
+				cb(rows, numChunks++, partial);
+
+			return;
+		}
 
 		let quoteChar = quote == '' ? 0 : quote.charCodeAt(0);
 		let rowDelimChar = rowDelim.charCodeAt(0);
