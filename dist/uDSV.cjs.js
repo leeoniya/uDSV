@@ -159,7 +159,7 @@ function schema(csvStr, limit) {
 	const _maxCols = firstRowStr.split(colDelim).length;
 	const firstRows = [];
 	parse(csvStr, schema, chunk => firstRows.push(...chunk), false, limit, 1, _maxCols);
-	const header = firstRows.shift().filter(v => v !== '');
+	const header = firstRows.shift();
 	schema.cols.names = header; // todo: trim?
 //	schema.cols.types = Array(header.length).fill('s');
 
@@ -248,6 +248,11 @@ function parse(csvStr, schema, cb, withEOF = true, chunkSize = CHUNK_SIZE, chunk
 				v = "";
 
 				if (c === rowDelimChar) {
+					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
+						row.length = rowTpl.length = filledColIdx + 1;
+						lastColIdx = filledColIdx;
+					}
+
 					rows.push(row);
 
 					if (rows.length === chunkSize) {
@@ -329,6 +334,11 @@ function parse(csvStr, schema, cb, withEOF = true, chunkSize = CHUNK_SIZE, chunk
 				v = "";
 
 				if (c === rowDelimChar) {
+					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
+						row.length = rowTpl.length = filledColIdx + 1;
+						lastColIdx = filledColIdx;
+					}
+
 					rows.push(row);
 
 					if (rows.length === chunkSize) {
