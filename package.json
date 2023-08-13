@@ -7,7 +7,7 @@
   "typings": "./dist/uDSV.d.ts",
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/parse.spec.mjs && node ./test/api.spec.mjs"
   },
   "repository": {
     "type": "git",
