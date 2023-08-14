@@ -25,7 +25,7 @@ function genToTypedRows(cols, rows, objs = false) {
 
 	// todo, get this from schema assertion
 	cols.forEach((col, ci) => {
-		buf += objs ? `"${col}":` : '';
+		buf += objs ? `"${col.replaceAll('"', '\\"')}":` : '';
 
 		let rv = `r[${ci}]`;
 
