@@ -20,61 +20,104 @@ const ISO8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}
 const COL_DELIMS = [tab, pipe, semi, comma];
 const CHUNK_SIZE = 5e3;
 
-function genToTypedRows(cols, rows, objs = false) {
-	let buf = objs ? '{' : '[';
+// v is string sample value
+function getValParseExpr(rows, ci) {
+	let rv = `r[${ci}]`;
 
-	// todo, get this from schema assertion
-	cols.forEach((col, ci) => {
-		buf += objs ? `"${col.replaceAll('"', '\\"')}":` : '';
+	let parseVal = rv;
 
-		let rv = `r[${ci}]`;
+	// row with a value to analyze
+	let row = rows.find(r => r[ci] != null && r[ci] !== ''); // trim()?
 
-		let parseVal = rv;
+	if (row != null) {
+		let v = row[ci]; // trim()?
 
-		// row with a value to analyze
-		let row = rows.find(r => r[ci] != null && r[ci] !== ''); // trim()?
+		// dates
+		if (ISO8601.test(v))
+			parseVal = `new Date(${rv})`;
+		// numbers
+		else if (!Number.isNaN(Number.parseFloat(v)))
+			parseVal = `${rv} === 'NaN' ? NaN : Number.parseFloat(${rv})`;
+		// bools (T/F? 1/0?)
+		else if (/^(?:true|false|yes|no)$/i.test(v)) {
+			let [c0, c1] = v;
 
-		if (row != null) {
-			let v = row[ci]; // trim()?
+			let t =
+				c0 == 't' || c0 == 'f' ? 'true' :
+				c0 == 'T' || c0 == 'F' ? (c1 == 'R' || c1 === 'A' ? 'TRUE' : 'True') :
 
-			// dates
-			if (ISO8601.test(v))
-				parseVal = `new Date(${rv})`;
-			// numbers
-			else if (!Number.isNaN(Number.parseFloat(v)))
-				parseVal = `${rv} === 'NaN' ? NaN : Number.parseFloat(${rv})`;
-			// bools (T/F? 1/0?)
-			else if (/^(?:true|false|yes|no)$/i.test(v)) {
-				let [c0, c1] = v;
+				c0 == 'y' || c0 == 'n' ? 'yes' :
+				c0 == 'Y' || c0 == 'N' ? (c1 == 'E' || c1 === 'O' ? 'YES'  : 'Yes')  :
 
-				let t =
-					c0 == 't' || c0 == 'f' ? 'true' :
-					c0 == 'T' || c0 == 'F' ? (c1 == 'R' || c1 === 'A' ? 'TRUE' : 'True') :
+				'';
 
-					c0 == 'y' || c0 == 'n' ? 'yes' :
-					c0 == 'Y' || c0 == 'N' ? (c1 == 'E' || c1 === 'O' ? 'YES'  : 'Yes')  :
-
-					'';
-
-				parseVal = `${rv} === '${t}' ? true : false`;
-			}
-			// json
-			else if (v[0] === '[' || v[0] === '{') {
-				try {
-					JSON.parse(v);
-					parseVal = `JSON.parse(${rv})`;
-				} catch {}
-			}
+			parseVal = `${rv} === '${t}' ? true : false`;
 		}
+		// json
+		else if (v[0] === '[' || v[0] === '{') {
+			try {
+				JSON.parse(v);
+				parseVal = `JSON.parse(${rv})`;
+			} catch {}
+		}
+	}
 
-		let empty = `${rv} === '' || ${rv} === 'null' || ${rv} === 'NULL' ? null : `;
+	let empty = `${rv} === '' || ${rv} === 'null' || ${rv} === 'NULL' ? null : `;
 
-		// let empty = `${rv} === '' ? undefined : `;  // trim()?
+	// let empty = `${rv} === '' ? undefined : `;  // trim()?
 
-		buf += `${empty} ${parseVal},`;
-	});
+	return `${empty} ${parseVal}`;
+}
 
-	buf += objs ? '}' : ']';
+const segsRe = /\w+(?:\[|\]?[\.\[]?|$)/gm;
+
+function genToTypedRows(cols, rows, objs = false, deep = false) {
+	let buf = '';
+
+	if (objs) {
+		let tplObj = {};
+		let colIdx = 0;
+
+		let paths = cols.slice();
+
+		do {
+			let path = paths.shift();
+
+			let segs = !deep || /\s/.test(path) ? [path] : [...path.matchAll(segsRe)].flatMap(m => m.map(m => m.replace(']', '')));
+
+			let node = tplObj;
+			do {
+				let seg = segs.shift();
+
+				let key = seg;
+				let endChar = seg.at(-1);
+				let hasKids = endChar == '.' || endChar == '[';
+
+				if (hasKids) {
+					key = seg.slice(0, -1);
+					let nextNode = node[key] ?? (endChar == '.' ? {} : []);
+					node = node[key] = nextNode;
+				}
+				else
+					node[key] = `¦${colIdx}¦`;
+			} while (segs.length > 0);
+
+			colIdx++;
+		} while (paths.length > 0);
+
+		buf = JSON.stringify(tplObj).replace(/"¦(\d+)¦"/g, (m, ci) => getValParseExpr(rows, +ci));
+	}
+	else {
+		buf = '[';
+
+		// todo, get this from schema assertion
+		cols.forEach((col, ci) => {
+			let parseVal = getValParseExpr(rows, ci);
+			buf += `${parseVal},`;
+		});
+
+		buf += ']';
+	}
 
 	let fnBody = `
 		let arr = Array(rows.length);
@@ -129,6 +172,7 @@ function schema(csvStr, limit) {
 	let _toArrs = null;
 	let _toObjs = null;
 	let _toCols = null;
+	let _toDeep = null;
 
 	const schema = {
 		quote: hasQuotes ? quote : null,
@@ -141,12 +185,16 @@ function schema(csvStr, limit) {
 			delim: rowDelim,
 		},
 		toArrs: (chunk) => {
-			_toArrs ??= genToTypedRows(header, firstRows, false);
+			_toArrs ??= genToTypedRows(header, firstRows, false, false);
 			return _toArrs(chunk);
 		},
 		toObjs: (chunk) => {
-			_toObjs ??= genToTypedRows(header, firstRows, true);
+			_toObjs ??= genToTypedRows(header, firstRows, true, false);
 			return _toObjs(chunk);
+		},
+		toDeep: (chunk) => {
+			_toDeep ??= genToTypedRows(header, firstRows, true, true);
+			return _toDeep(chunk);
 		},
 		toCols: (chunk) => {
 			_toCols ??= genToCols(header);
@@ -159,7 +207,7 @@ function schema(csvStr, limit) {
 	const sampleLen = 1024 * 8; // 8kb
 	const _maxCols = firstRowStr.split(colDelim).length;
 	const firstRows = [];
-	parse(csvStr.slice(0, sampleLen), schema, chunk => firstRows.push(...chunk), false, limit, 1, _maxCols);
+	parse(csvStr.slice(0, sampleLen), schema, chunk => firstRows.push(...chunk), sampleLen >= csvStr.length, limit, 1, _maxCols);
 	const header = firstRows.shift();
 	schema.cols.names = header; // todo: trim?
 //	schema.cols.types = Array(header.length).fill('s');

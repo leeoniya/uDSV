@@ -227,6 +227,64 @@ test('correctness using Papa as reference', (t) => {
     }
 });
 
+const deepObjs = `
+_type,name,description,location.city,location.street,location.geo[0],location.geo[1],speed,heading,size[0],size[1],size[2],"field with , delimiter","field with "" double quote"
+item,Item 0,Item 0 description in text,Rotterdam,Main street,51.9280712,4.4207888,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+`.trim();
+
+/*
+test('typed arrs', (t) => {
+    let rows = [];
+    let s = schema(csvStr);
+    parse(csvStr, s, (chunk, chunkNum) => {
+      rows.push(...s.toArrs(chunkNum === 0 ? chunk.slice(1) : chunk));
+    });
+    res(rows);
+});
+
+test('typed objs', (t) => {
+    let rows = [];
+    let _schema = schema(csvStr);
+    parse(csvStr, schema, (chunk, chunkNum) => {
+      rows.push(...schema.toObjs(chunkNum === 0 ? chunk.slice(1) : chunk));
+    });
+    res(rows);
+});
+
+test('typed cols', (t) => {
+    let rows = [];
+    let _schema = schema(csvStr);
+    parse(csvStr, schema, (chunk, chunkNum) => {
+      rows.push(...schema.toObjs(chunkNum === 0 ? chunk.slice(1) : chunk));
+    });
+    res(rows);
+});
+*/
+
+test('typed objs (deep)', (t) => {
+    let rows = [];
+    let s = schema(deepObjs);
+    parse(deepObjs, s, (chunk, chunkNum) => {
+      rows.push(...s.toDeep(chunkNum === 0 ? chunk.slice(1) : chunk));
+    });
+
+    assert.deepEqual(rows, [{
+        _type: 'item',
+        name: 'Item 0',
+        description: 'Item 0 description in text',
+        location: {
+          city: 'Rotterdam',
+          street: 'Main street',
+          geo: [ 51.9280712, 4.4207888 ]
+        },
+        speed: 5.4,
+        heading: 128.3,
+        size: [ 3.4, 5.1, 0.9 ],
+        'field with , delimiter': 'value with , delimiter',
+        'field with " double quote': 'value with " double quote'
+      }]);
+});
+
 test('variable size chunks (incremental/streaming)', async (t) => {
     function chunkString(str, len) {
         return str.match(new RegExp(`.{1,${len}}`, 'gms'));
@@ -248,7 +306,7 @@ test('variable size chunks (incremental/streaming)', async (t) => {
         // 10-ish rows
         let maxChunkSize = minChunkSize * 10;
 
-        let dataKey = csvStr.slice(0, 10);
+        // let dataKey = csvStr.slice(0, 10);
 
         for (let chunkSize = minChunkSize; chunkSize < maxChunkSize; chunkSize++) {
             let chunks = chunkString(csvStr, chunkSize);
