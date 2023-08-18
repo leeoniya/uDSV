@@ -25,7 +25,6 @@ var uDSV = (function (exports) {
 	function boolTrue(v) {
 		let [c0, c1 = ''] = v;
 
-
 		return (
 			c0 == '1' || c0 == '0' ? '1' :
 
@@ -74,7 +73,7 @@ var uDSV = (function (exports) {
 			t = (
 				ISO8601.test(v)                     ? T_DATE                        :
 				!Number.isNaN(Number.parseFloat(v)) ? T_NUMBER                      :
-				BOOL_RE.test(v)                     ? `${T_BOOLEAN}:${boolTrue(v)}` :
+				BOOL_RE.test(v)                     ? T_BOOLEAN + ':' + boolTrue(v) :
 				isJSON(v)                           ? T_JSON                        :
 				t
 			);
@@ -175,12 +174,12 @@ var uDSV = (function (exports) {
 	}
 
 	function genToCols(cols) {
-		return new Function('chunk', `
-		let cols = [${cols.map((col, i) => `Array(chunk.length)`).join(',')}];
+		return new Function('rows', `
+		let cols = [${cols.map(() => `Array(rows.length)`).join(',')}];
 
-		for (let i = 0; i < chunk.length; i++) {
-			let row = chunk[i];
-			${cols.map((col, i) => `cols[${i}][i] = row[${i}]`).join(';')};
+		for (let i = 0; i < rows.length; i++) {
+			let r = rows[i];
+			${cols.map((c, i) => `cols[${i}][i] = r[${i}]`).join(';')};
 		}
 
 		return cols;
@@ -253,26 +252,6 @@ var uDSV = (function (exports) {
 				null: void 0,
 			});
 		});
-
-	//	const header = firstRows.shift();
-	//	schema.cols.names = header; // todo: trim?
-	//	schema.cols.types = Array(header.length).fill('s');
-
-	/*
-		// probe data for types
-		firstRows.forEach(r => {
-			r.forEach((val, colIdx) => {
-				if (!Number.isNaN(+val))
-					schema.cols.types[colIdx] = 'n';
-				else {
-				//	let lower = val.toLowerCase();
-
-				//	if (lower === 'true' || lower === 'false')
-				//		schema.cols.types[colIdx] = 'b';
-				}
-			});
-		});
-	*/
 
 		return schema;
 	}
