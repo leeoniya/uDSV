@@ -16,74 +16,100 @@ const pipe  = '|';
 const semi  = ';';
 
 const ISO8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2})$/;
+const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
 const COL_DELIMS = [tab, pipe, semi, comma];
 const CHUNK_SIZE = 5e3;
 
-// v is string sample value
-function getValParseExpr(rows, ci) {
-	let rv = `r[${ci}]`;
+function boolTrue(v) {
+	let [c0, c1 = ''] = v;
 
-	let parseVal = rv;
 
-	// row with a value to analyze
-	let row = rows.find(r => r[ci] != null && r[ci] !== ''); // trim()?
+	return (
+		c0 == '1' || c0 == '0' ? '1' :
 
-	if (row != null) {
-		let v = row[ci]; // trim()?
+		c0 == 't' || c0 == 'f' ? (c1 == '' ? 't' : 'true') :
+		c0 == 'T' || c0 == 'F' ? (c1 == '' ? 'T' : c1 == 'R' || c1 === 'A' ? 'TRUE' : 'True') :
 
-		// dates
-		if (ISO8601.test(v))
-			parseVal = `new Date(${rv})`;
-		// numbers
-		else if (!Number.isNaN(Number.parseFloat(v)))
-			parseVal = `${rv} === 'NaN' ? NaN : Number.parseFloat(${rv})`;
-		// bools (T/F? 1/0?)
-		else if (/^(?:true|false|yes|no)$/i.test(v)) {
-			let [c0, c1] = v;
+		c0 == 'y' || c0 == 'n' ? (c1 == '' ? 'y' : 'yes') :
+		c0 == 'Y' || c0 == 'N' ? (c1 == '' ? 'Y' : c1 == 'E' || c1 === 'O' ? 'YES'  : 'Yes')  :
 
-			let t =
-				c0 == 't' || c0 == 'f' ? 'true' :
-				c0 == 'T' || c0 == 'F' ? (c1 == 'R' || c1 === 'A' ? 'TRUE' : 'True') :
+		''
+	);
+}
 
-				c0 == 'y' || c0 == 'n' ? 'yes' :
-				c0 == 'Y' || c0 == 'N' ? (c1 == 'E' || c1 === 'O' ? 'YES'  : 'Yes')  :
-
-				'';
-
-			parseVal = `${rv} === '${t}' ? true : false`;
-		}
-		// json
-		else if (v[0] === '[' || v[0] === '{') {
-			try {
-				JSON.parse(v);
-				parseVal = `JSON.parse(${rv})`;
-			} catch {}
-		}
+function isJSON(v) {
+	if (v[0] === '[' || v[0] === '{') {
+		try {
+			JSON.parse(v);
+			return true;
+		} catch {}
 	}
 
-	let empty = `${rv} === '' || ${rv} === 'null' || ${rv} === 'NULL' ? null : `;
+	return false;
+}
 
-	// let empty = `${rv} === '' ? undefined : `;  // trim()?
+function guessType(ci, rows) {
+	// row with a value to analyze
+	// trim()?
+	let row = rows.find(r =>
+		r[ci] !== ''     &&
+		r[ci] !== 'null' &&
+		r[ci] !== 'NULL' &&
+		r[ci] !== 'NaN'
+	);
 
-	return `${empty} ${parseVal}`;
+	let t = 'string';
+
+	if (row != null) {
+		let v = row[ci];
+
+		t = (
+			ISO8601.test(v)                     ? 'date'                   :
+			!Number.isNaN(Number.parseFloat(v)) ? 'number'                 :
+			BOOL_RE.test(v)                     ? `boolean:${boolTrue(v)}` :
+			isJSON(v)                           ? 'json'                   :
+			t
+		);
+	}
+
+	return t;
+}
+
+function getValParseExpr(ci, col) {
+	let { type } = col;
+
+	let rv = `r[${ci}]`; // trim()?
+
+	let parseExpr =
+		type === 'date'            ? `new Date(${rv})`                             :
+		type === 'json'            ? `JSON.parse(${rv})`                           :
+		type === 'number'          ? `Number.parseFloat(${rv})`                    :
+		type.startsWith('boolean') ? `${rv} === '${type.slice(8)}' ? true : false` :
+		rv;
+
+	let nanExpr   = col.NaN   !== void 0 && type === 'number' ? `${rv} === 'NaN' ? ${col.NaN} : `                       : '';
+	let nullExpr  = col.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${col.null} : ` : '';
+	let emptyExpr = col.empty !== void 0                      ? `${rv} === '' ? ${col.empty} : `                        : '';
+
+	return `${emptyExpr} ${nullExpr} ${nanExpr} ${parseExpr}`;
 }
 
 const segsRe = /\w+(?:\[|\]?[\.\[]?|$)/gm;
 
-function genToTypedRows(cols, rows, objs = false, deep = false) {
+function genToTypedRows(cols, objs = false, deep = false) {
 	let buf = '';
 
-	if (objs) {
+	if (objs && deep) {
 		let tplObj = {};
 		let colIdx = 0;
 
-		let paths = cols.slice();
+		let paths = cols.map(c => c.name);
 
 		do {
 			let path = paths.shift();
 
-			let segs = !deep || /\s/.test(path) ? [path] : [...path.matchAll(segsRe)].flatMap(m => m.map(m => m.replace(']', '')));
+			let segs = /\s/.test(path) ? [path] : [...path.matchAll(segsRe)].flatMap(m => m.map(m => m.replace(']', '')));
 
 			let node = tplObj;
 			do {
@@ -105,18 +131,19 @@ function genToTypedRows(cols, rows, objs = false, deep = false) {
 			colIdx++;
 		} while (paths.length > 0);
 
-		buf = JSON.stringify(tplObj).replace(/"¦(\d+)¦"/g, (m, ci) => getValParseExpr(rows, +ci));
+		buf = JSON.stringify(tplObj).replace(/"¦(\d+)¦"/g, (m, ci) => getValParseExpr(+ci, cols[+ci]));
 	}
 	else {
-		buf = '[';
+		buf = objs ? '{' : '[';
 
 		// todo, get this from schema assertion
 		cols.forEach((col, ci) => {
-			let parseVal = getValParseExpr(rows, ci);
+			buf += objs ? `"${col.name.replaceAll('"', '\\"')}":` : '';
+			let parseVal = getValParseExpr(ci, col);
 			buf += `${parseVal},`;
 		});
 
-		buf += ']';
+		buf += objs ? '}' : ']';
 	}
 
 	let fnBody = `
@@ -141,11 +168,11 @@ function genToTypedRows(cols, rows, objs = false, deep = false) {
 
 function genToCols(cols) {
 	return new Function('chunk', `
-		let cols = [${cols.map((n, i) => `Array(chunk.length)`).join(',')}];
+		let cols = [${cols.map((col, i) => `Array(chunk.length)`).join(',')}];
 
 		for (let i = 0; i < chunk.length; i++) {
 			let row = chunk[i];
-			${cols.map((n, i) => `cols[${i}][i] = row[${i}]`).join(';')};
+			${cols.map((col, i) => `cols[${i}][i] = row[${i}]`).join(';')};
 		}
 
 		return cols;
@@ -153,6 +180,8 @@ function genToCols(cols) {
 }
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
+
+const BIG_ROW_LEN = 1024;
 
 // schema guesser
 function schema(csvStr, limit) {
@@ -176,40 +205,49 @@ function schema(csvStr, limit) {
 
 	const schema = {
 		quote: hasQuotes ? quote : null,
-		cols: {
-			delim: colDelim,
-			names: [],
-		//	types: [], // ['s','n','b','e'], // enums?
+		delims: {
+			row: rowDelim,
+			col: colDelim,
 		},
-		rows: {
-			delim: rowDelim,
-		},
+		cols: [],
+
 		toArrs: (chunk) => {
-			_toArrs ??= genToTypedRows(header, firstRows, false, false);
+			_toArrs ??= genToTypedRows(schema.cols, false, false);
 			return _toArrs(chunk);
 		},
 		toObjs: (chunk) => {
-			_toObjs ??= genToTypedRows(header, firstRows, true, false);
+			_toObjs ??= genToTypedRows(schema.cols, true, false);
 			return _toObjs(chunk);
 		},
 		toDeep: (chunk) => {
-			_toDeep ??= genToTypedRows(header, firstRows, true, true);
+			_toDeep ??= genToTypedRows(schema.cols, true, true);
 			return _toDeep(chunk);
 		},
 		toCols: (chunk) => {
-			_toCols ??= genToCols(header);
+			_toCols ??= genToCols(schema.cols);
 			return _toCols(chunk);
 		},
 	};
 
 	// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
-	const sampleLen = 1024 * 8; // 8kb
+	const sampleLen = limit * BIG_ROW_LEN; // 8kb
 	const _maxCols = firstRowStr.split(colDelim).length;
 	const firstRows = [];
 	parse(csvStr.slice(0, sampleLen), schema, chunk => firstRows.push(...chunk), sampleLen >= csvStr.length, limit, 1, _maxCols);
-	const header = firstRows.shift();
-	schema.cols.names = header; // todo: trim?
+
+	firstRows.shift().forEach((colName, colIdx) => {
+		schema.cols.push({
+			name: colName,
+			type: guessType(colIdx, firstRows),
+			empty: null,
+			NaN: void 0,
+			null: void 0,
+		});
+	});
+
+//	const header = firstRows.shift();
+//	schema.cols.names = header; // todo: trim?
 //	schema.cols.types = Array(header.length).fill('s');
 
 /*
@@ -232,11 +270,11 @@ function schema(csvStr, limit) {
 }
 
 function parse(csvStr, schema, cb, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
-	let colDelim = schema.cols.delim;
-	let rowDelim = schema.rows.delim;
+	let colDelim = schema.delims.col;
+	let rowDelim = schema.delims.row;
 	let quote = schema.quote ?? '';
 
-	let numCols = _maxCols || schema.cols.names.length;
+	let numCols = _maxCols || schema.cols.length;
 
 	let _limit = chunkLimit != null;
 	// uses a slower regexp path for schema probing
