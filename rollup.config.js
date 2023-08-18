@@ -14,6 +14,7 @@ const fs = require('fs');
 // fs.writeFileSync('./dist/uDSV.min.css', minicss);
 
 import terser from '@rollup/plugin-terser';
+import replace from 'rollup-plugin-re';
 
 const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 const ver = "v" + pkg.version;
@@ -46,6 +47,17 @@ function bannerlessESM() {
 	};
 }
 
+function tplMin() {
+	return replace({
+		patterns: [
+			{
+				test: /`$[\s\S]+?^\s+`/gm,
+				replace: (code) => code.replace(/\s+/gm, ' '),
+			}
+		]
+	});
+}
+
 const terserOpts = {
 	compress: {
 		inline: 0,
@@ -71,6 +83,9 @@ export default [
 			format: 'es',
 			banner,
 		},
+		plugins: [
+		//	tplMin(),
+		]
 	},
 	{
 		input: './src/uDSV.mjs',
@@ -81,6 +96,9 @@ export default [
 			exports: "auto",
 			banner,
 		},
+		plugins: [
+		//	tplMin(),
+		]
 	},
 	{
 		input: 'uDSV',
@@ -93,6 +111,7 @@ export default [
 		},
 		plugins: [
 			bannerlessESM(),
+		//	tplMin(),
 		]
 	},
 	{
@@ -106,6 +125,7 @@ export default [
 		},
 		plugins: [
 			bannerlessESM(),
+			tplMin(),
 			terser(terserOpts),
 		]
 	},

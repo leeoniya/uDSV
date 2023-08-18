@@ -49,6 +49,12 @@ function isJSON(v) {
 	return false;
 }
 
+const T_STRING  = 's';
+const T_DATE    = 'd';
+const T_NUMBER  = 'n';
+const T_JSON    = 'j';
+const T_BOOLEAN = 'b';
+
 function guessType(ci, rows) {
 	// row with a value to analyze
 	// trim()?
@@ -59,16 +65,16 @@ function guessType(ci, rows) {
 		r[ci] !== 'NaN'
 	);
 
-	let t = 'string';
+	let t = T_STRING;
 
 	if (row != null) {
 		let v = row[ci];
 
 		t = (
-			ISO8601.test(v)                     ? 'date'                   :
-			!Number.isNaN(Number.parseFloat(v)) ? 'number'                 :
-			BOOL_RE.test(v)                     ? `boolean:${boolTrue(v)}` :
-			isJSON(v)                           ? 'json'                   :
+			ISO8601.test(v)                     ? T_DATE                        :
+			!Number.isNaN(Number.parseFloat(v)) ? T_NUMBER                      :
+			BOOL_RE.test(v)                     ? `${T_BOOLEAN}:${boolTrue(v)}` :
+			isJSON(v)                           ? T_JSON                        :
 			t
 		);
 	}
@@ -82,13 +88,13 @@ function getValParseExpr(ci, col) {
 	let rv = `r[${ci}]`; // trim()?
 
 	let parseExpr =
-		type === 'date'            ? `new Date(${rv})`                             :
-		type === 'json'            ? `JSON.parse(${rv})`                           :
-		type === 'number'          ? `Number.parseFloat(${rv})`                    :
-		type.startsWith('boolean') ? `${rv} === '${type.slice(8)}' ? true : false` :
+		type    === T_DATE    ? `new Date(${rv})`                             :
+		type    === T_JSON    ? `JSON.parse(${rv})`                           :
+		type    === T_NUMBER  ? `Number.parseFloat(${rv})`                    :
+		type[0] === T_BOOLEAN ? `${rv} === '${type.slice(2)}' ? true : false` :
 		rv;
 
-	let nanExpr   = col.NaN   !== void 0 && type === 'number' ? `${rv} === 'NaN' ? ${col.NaN} : `                       : '';
+	let nanExpr   = col.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${col.NaN} : `                       : '';
 	let nullExpr  = col.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${col.null} : ` : '';
 	let emptyExpr = col.empty !== void 0                      ? `${rv} === '' ? ${col.empty} : `                        : '';
 
@@ -146,11 +152,12 @@ function genToTypedRows(cols, objs = false, deep = false) {
 		buf += objs ? '}' : ']';
 	}
 
+	// r.trim()?
 	let fnBody = `
 		let arr = Array(rows.length);
 
 		for (let i = 0; i < rows.length; i++) {
-			let r = rows[i];   // trim()?
+			let r = rows[i];
 			arr[i] = ${buf};
 		}
 
