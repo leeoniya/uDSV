@@ -20,7 +20,7 @@ var uDSV = (function (exports) {
 	const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
 	const COL_DELIMS = [tab, pipe, semi, comma];
-	const CHUNK_SIZE = 5e3;
+	const CHUNK_SIZE = 1e3;
 
 	function boolTrue(v) {
 		let [c0, c1 = ''] = v;
@@ -142,7 +142,6 @@ var uDSV = (function (exports) {
 		else {
 			buf = objs ? '{' : '[';
 
-			// todo, get this from schema assertion
 			cols.forEach((col, ci) => {
 				buf += objs ? `"${col.name.replaceAll('"', '\\"')}":` : '';
 				let parseVal = getValParseExpr(ci, col);
@@ -187,23 +186,20 @@ var uDSV = (function (exports) {
 	}
 
 	// https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
-
-	const BIG_ROW_LEN = 1024;
-
-	// schema guesser
-	function schema(csvStr, limit) {
-		limit ??= 10;
+	// skip?
+	function schema(csvStr, colDelim, colQuote, rowDelim, maxRows, maxBytes) {
+		maxRows  ??= 10;
+		maxBytes ??= 4 * 1024; // 4KB
 
 		// will fail if header contains line breaks in quoted value
 		// will fail if single line without line breaks
-		const firstRowMatch = csvStr.match(/(.*)(\r?\n?)/);
-
+		const rowRE         = new RegExp(`(.*)(${rowDelim ?? '\r\n|\r|\n'})`);
+		const firstRowMatch = csvStr.match(rowRE);
 		const firstRowStr   = firstRowMatch[1];
-		const rowDelim      = firstRowMatch[2];
-		const colDelim      = COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1);
 
-		// TODO: detect single quotes?
-		let hasQuotes = csvStr.indexOf(quote) > -1;
+		rowDelim ??= firstRowMatch[2];
+		colDelim ??= COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1) ?? '';
+		colQuote ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
 
 		let _toArrs = null;
 		let _toObjs = null;
@@ -211,11 +207,10 @@ var uDSV = (function (exports) {
 		let _toDeep = null;
 
 		const schema = {
-			quote: hasQuotes ? quote : null,
-			delims: {
-				row: rowDelim,
-				col: colDelim,
-			},
+			// header or skip?
+
+			delims: [rowDelim, colDelim, colQuote],
+
 			cols: [],
 
 			toArrs: (chunk) => {
@@ -238,15 +233,20 @@ var uDSV = (function (exports) {
 
 		// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
-		const sampleLen = limit * BIG_ROW_LEN; // 8kb
 		const _maxCols = firstRowStr.split(colDelim).length;
+
+		const sampleStr = maxBytes < csvStr.length ? csvStr.slice(0, maxBytes) : csvStr;
+
 		const firstRows = [];
-		parse(csvStr.slice(0, sampleLen), schema, chunk => firstRows.push(...chunk), sampleLen >= csvStr.length, limit, 1, _maxCols);
+		parse(sampleStr, schema, chunk => firstRows.push(...chunk), sampleStr.length === csvStr.length, maxRows, 1, _maxCols);
 
 		firstRows.shift().forEach((colName, colIdx) => {
+			const type = guessType(colIdx, firstRows);
+
 			schema.cols.push({
+				type,
 				name: colName,
-				type: guessType(colIdx, firstRows),
+
 				empty: null,
 				NaN: void 0,
 				null: void 0,
@@ -257,9 +257,7 @@ var uDSV = (function (exports) {
 	}
 
 	function parse(csvStr, schema, cb, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
-		let colDelim = schema.delims.col;
-		let rowDelim = schema.delims.row;
-		let quote = schema.quote ?? '';
+		let [ rowDelim, colDelim, colQuote ] = schema.delims;
 
 		let numCols = _maxCols || schema.cols.length;
 
@@ -273,7 +271,7 @@ var uDSV = (function (exports) {
 
 		// this no-quote block is a 10% perf boost in V8, and 2x boost in JSC
 		// it can be fully omitted without breaking anything
-		if (quote === '') {
+		if (colQuote === '') {
 			let lines = csvStr.split(rowDelim);
 
 			let partial = '';
@@ -308,7 +306,7 @@ var uDSV = (function (exports) {
 			return;
 		}
 
-		let quoteChar = quote == '' ? 0 : quote.charCodeAt(0);
+		let quoteChar = colQuote == '' ? 0 : colQuote.charCodeAt(0);
 		let rowDelimChar = rowDelim.charCodeAt(0);
 		let colDelimChar = colDelim.charCodeAt(0);
 
@@ -402,7 +400,7 @@ var uDSV = (function (exports) {
 						let cNext = csvStr.charCodeAt(pos + 1);
 
 						if (cNext === quoteChar) {
-							v += quote;
+							v += colQuote;
 							pos += 2;
 
 							if (pos > endPos) {
@@ -421,7 +419,7 @@ var uDSV = (function (exports) {
 						}
 					}
 					else {
-						let pos2 = csvStr.indexOf(quote, pos);
+						let pos2 = csvStr.indexOf(colQuote, pos);
 
 						if (pos2 === -1) {
 							pos = endPos + 1;

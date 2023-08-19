@@ -4,6 +4,8 @@ import Papa from 'papaparse';
 import { strict as assert } from 'node:assert';
 import test from 'node:test';
 
+// https://github.com/maxogden/csv-spectrum
+
 // RFC 4180: https://www.ietf.org/rfc/rfc4180.txt
 const rfc4180 = `
 "Year ,"",d,",Make,Model,Description,Price
