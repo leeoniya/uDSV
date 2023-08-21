@@ -188,7 +188,10 @@ function genToCols(cols) {
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 // skip?
-function schema(csvStr, colDelim, colQuote, rowDelim, maxRows) {
+function schema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
+	// by default, grab first row, and skip it
+	headerFn ??= firstRows => [firstRows[0]];
+
 	maxRows ??= 10;
 
 	// will fail if header contains line breaks in quoted value
@@ -202,7 +205,7 @@ function schema(csvStr, colDelim, colQuote, rowDelim, maxRows) {
 	colQuote ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
 
 	const schema = {
-		header: 1, // how many header rows to skip
+		skip: 1, // how many header rows to skip
 		delims: [rowDelim, colDelim, colQuote],
 		cols: [],
 	};
@@ -214,7 +217,16 @@ function schema(csvStr, colDelim, colQuote, rowDelim, maxRows) {
 	const firstRows = [];
 	parse(csvStr, schema, chunk => { firstRows.push(...chunk); }, 0, true, maxRows, 1, _maxCols);
 
-	firstRows.shift().forEach((colName, colIdx) => {
+	let headerRows = headerFn(firstRows) ?? [];
+
+	let skip = schema.skip = headerRows.length;
+
+	// first non-null row
+	let colNames = headerRows.find(row => row != null);
+
+	firstRows.splice(0, skip);
+
+	colNames.forEach((colName, colIdx) => {
 		let type = guessType(colIdx, firstRows);
 
 		let col = {
@@ -235,7 +247,7 @@ function schema(csvStr, colDelim, colQuote, rowDelim, maxRows) {
 }
 
 function parser(schema, chunkSize) {
-	let { header, cols } = schema;
+	let { skip, cols } = schema;
 
 	let _toStrs = null;
 	let _toArrs = null;
@@ -246,6 +258,7 @@ function parser(schema, chunkSize) {
 
 	let streamChunkNum = 0;
 	let streamState = 0;
+	let streamParse = null;
 	let streamCb = null;
 	let pendChunk = '';
 	let prevUnparsed = '';
@@ -255,7 +268,7 @@ function parser(schema, chunkSize) {
 	function reset() {
 		streamState = streamChunkNum = 0;
 		prevUnparsed = pendChunk = '';
-		streamCb = buf = null;
+		streamParse = streamCb = buf = null;
 	}
 
 	let accum    = (rows, add) => { add(rows); };
@@ -274,7 +287,7 @@ function parser(schema, chunkSize) {
 			let out = buf;
 			let withEOF = streamState === 0 || streamState === 2;
 
-			let skip = streamChunkNum === 0 ? header : 0;
+			let _skip = streamChunkNum === 0 ? skip : 0;
 
 			parse(csvStr, schema, (rows, partial) => {
 				prevUnparsed = partial;
@@ -284,7 +297,7 @@ function parser(schema, chunkSize) {
 					reset();
 
 				return res;
-			}, skip, withEOF, chunkSize);
+			}, _skip, withEOF, chunkSize);
 
 			if (withEOF)
 				buf = null;
@@ -293,43 +306,50 @@ function parser(schema, chunkSize) {
 		};
 	}
 
+	const stringArrs = gen(initRows, addRows, () => {
+		_toStrs ??= rows => rows;
+		return _toStrs;
+	});
+
+	const typedArrs = gen(initRows, addRows, () => {
+		_toArrs ??= genToTypedRows(cols, false, false);
+		return _toArrs;
+	});
+
+	const typedObjs = gen(initRows, addRows, () => {
+		_toObjs ??= genToTypedRows(cols, true, false);
+		return _toObjs;
+	});
+
+	const typedDeep = gen(initRows, addRows, () => {
+		_toDeep ??= genToTypedRows(cols, true, true);
+		return _toDeep;
+	});
+
+	const typedCols = gen(initCols, addCols, () => {
+		_toArrs ??= genToTypedRows(cols, false, false);
+		_toCols ??= genToCols(cols);
+
+		return rows => _toCols(_toArrs(rows));
+	});
+
 	return {
 		schema,
 
-		stringArrs: gen(initRows, addRows, () => {
-			_toStrs ??= rows => rows;
-			return _toStrs;
-		}),
+		stringArrs,
+		typedArrs,
+		typedObjs,
+		typedDeep,
+		typedCols,
 
-		typedArrs: gen(initRows, addRows, () => {
-			_toArrs ??= genToTypedRows(cols, false, false);
-			return _toArrs;
-		}),
-
-		typedObjs: gen(initRows, addRows, () => {
-			_toObjs ??= genToTypedRows(cols, true, false);
-			return _toObjs;
-		}),
-
-		typedDeep: gen(initRows, addRows, () => {
-			_toDeep ??= genToTypedRows(cols, true, true);
-			return _toDeep;
-		}),
-
-		typedCols: gen(initCols, addCols, () => {
-			_toArrs ??= genToTypedRows(cols, false, false);
-			_toCols ??= genToCols(cols);
-
-			return rows => _toCols(_toArrs(rows));
-		}),
-
-		chunk(csvStr, cb) {
-			streamCb ??= cb;
+		chunk(csvStr, parse = stringArrs, cb = accum) {
+			streamParse ??= parse;
+			streamCb    ??= cb;
 
 			let out = null;
 
 			if (streamState === 1) {
-				out = streamCb(prevUnparsed + pendChunk);
+				out = streamParse(prevUnparsed + pendChunk, streamCb);
 				streamChunkNum++;
 			}
 
@@ -339,7 +359,7 @@ function parser(schema, chunkSize) {
 		},
 		end() {
 			streamState = 2;
-			let out = streamCb(prevUnparsed + pendChunk);
+			let out = streamParse(prevUnparsed + pendChunk, streamCb);
 			reset();
 			return out;
 		},

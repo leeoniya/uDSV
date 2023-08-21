@@ -219,7 +219,7 @@ test('correctness using Papa as reference', (t) => {
         let ref = Papa.parse(csvStr).data;
 
         let s = schema(csvStr);
-        s.header = 0;
+        s.skip = 0;
         let p = parser(s);
 
         let rows = p.stringArrs(csvStr);
@@ -291,7 +291,7 @@ test('variable size chunks (incremental/streaming)', async (t) => {
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         // reference non-iterative parse
         let s  = schema(csvStr);
-        s.header = 0;
+        s.skip = 0;
         let p = parser(s);
         let rows = p.stringArrs(csvStr);
 
