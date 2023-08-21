@@ -1,4 +1,4 @@
-import { schema, parse } from '../src/uDSV.mjs';
+import { schema, parser } from '../src/uDSV.mjs';
 import Papa from 'papaparse';
 
 import { strict as assert } from 'node:assert';
@@ -218,12 +218,11 @@ test('correctness using Papa as reference', (t) => {
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         let ref = Papa.parse(csvStr).data;
 
-        let _schema = schema(csvStr);
-        let rows = [];
+        let s = schema(csvStr);
+        s.header = 0;
+        let p = parser(s);
 
-        parse(csvStr, _schema, (chunk, chunkNum) => {
-            rows.push(...chunk);
-        });
+        let rows = p.stringArrs(csvStr);
 
         assert.deepEqual(ref, rows);
     }
@@ -264,11 +263,8 @@ test('typed cols', (t) => {
 */
 
 test('typed objs (deep)', (t) => {
-    let rows = [];
-    let s = schema(deepObjs);
-    parse(deepObjs, s, (chunk, chunkNum) => {
-      rows.push(...s.toDeep(chunkNum === 0 ? chunk.slice(1) : chunk));
-    });
+    let p = parser(schema(deepObjs));
+    let rows = p.typedDeep(deepObjs);
 
     assert.deepEqual(rows, [{
         _type: 'item',
@@ -294,12 +290,10 @@ test('variable size chunks (incremental/streaming)', async (t) => {
 
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         // reference non-iterative parse
-        let _schema = schema(csvStr);
-        let rows = [];
-
-        parse(csvStr, _schema, (chunk, chunkNum) => {
-            rows.push(...chunk);
-        });
+        let s  = schema(csvStr);
+        s.header = 0;
+        let p = parser(s);
+        let rows = p.stringArrs(csvStr);
 
         // console.log(rows);
 
@@ -311,16 +305,11 @@ test('variable size chunks (incremental/streaming)', async (t) => {
         // let dataKey = csvStr.slice(0, 10);
 
         for (let chunkSize = minChunkSize; chunkSize < maxChunkSize; chunkSize++) {
-            let chunks = chunkString(csvStr, chunkSize);
-
-            let rowsIncr = [];
-            let prevPartial = '';
-            chunks.forEach((chunk, i) => {
-                parse(prevPartial + chunk, _schema, (_rows, chunkNum, partial) => {
-                    rowsIncr.push(..._rows);
-                    prevPartial = partial;
-                }, i === chunks.length - 1);
+            chunkString(csvStr, chunkSize).forEach(chunk => {
+                p.chunk(chunk, p.stringArrs);
             });
+
+            let rowsIncr = p.end();
 
             // await t.test(`${dataKey}, chunkSize: ${chunkSize}`, t2 => {
                 assert.deepEqual(rows, rowsIncr);

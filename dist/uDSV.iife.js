@@ -94,9 +94,11 @@ var uDSV = (function (exports) {
 			type[0] === T_BOOLEAN ? `${rv} === '${type.slice(2)}' ? true : false` :
 			rv;
 
-		let nanExpr   = col.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${col.NaN} : `                       : '';
-		let nullExpr  = col.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${col.null} : ` : '';
-		let emptyExpr = col.empty !== void 0                      ? `${rv} === '' ? ${col.empty} : `                        : '';
+		let { repl } = col;
+
+		let nanExpr   = repl.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${repl.NaN} : `                       : '';
+		let nullExpr  = repl.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${repl.null} : ` : '';
+		let emptyExpr = repl.empty !== void 0                      ? `${rv} === '' ? ${repl.empty} : `                        : '';
 
 		return `${emptyExpr} ${nullExpr} ${nanExpr} ${parseExpr}`;
 	}
@@ -201,34 +203,10 @@ var uDSV = (function (exports) {
 		colDelim ??= COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1) ?? '';
 		colQuote ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
 
-		let _toArrs = null;
-		let _toObjs = null;
-		let _toCols = null;
-		let _toDeep = null;
-
 		const schema = {
-			// header or skip?
-
+			header: 1, // how many header rows to skip
 			delims: [rowDelim, colDelim, colQuote],
-
 			cols: [],
-
-			toArrs: (chunk) => {
-				_toArrs ??= genToTypedRows(schema.cols, false, false);
-				return _toArrs(chunk);
-			},
-			toObjs: (chunk) => {
-				_toObjs ??= genToTypedRows(schema.cols, true, false);
-				return _toObjs(chunk);
-			},
-			toDeep: (chunk) => {
-				_toDeep ??= genToTypedRows(schema.cols, true, true);
-				return _toDeep(chunk);
-			},
-			toCols: (chunk) => {
-				_toCols ??= genToCols(schema.cols);
-				return _toCols(chunk);
-			},
 		};
 
 		// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
@@ -238,25 +216,141 @@ var uDSV = (function (exports) {
 		const sampleStr = maxBytes < csvStr.length ? csvStr.slice(0, maxBytes) : csvStr;
 
 		const firstRows = [];
-		parse(sampleStr, schema, chunk => firstRows.push(...chunk), sampleStr.length === csvStr.length, maxRows, 1, _maxCols);
+		parse(sampleStr, schema, chunk => firstRows.push(...chunk), 0, sampleStr.length === csvStr.length, maxRows, 1, _maxCols);
 
 		firstRows.shift().forEach((colName, colIdx) => {
-			const type = guessType(colIdx, firstRows);
+			let type = guessType(colIdx, firstRows);
 
-			schema.cols.push({
-				type,
+			let col = {
 				name: colName,
+				type,
+				// this could be type-dependant (e.g. {empty: 0, null: 0, NaN: NaN} for numbers)
+				repl: {
+					empty: null,
+					NaN: void 0,
+					null: void 0,
+				},
+			};
 
-				empty: null,
-				NaN: void 0,
-				null: void 0,
-			});
+			schema.cols.push(col);
 		});
 
 		return schema;
 	}
 
-	function parse(csvStr, schema, cb, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
+	function parser(schema, chunkSize) {
+		let { header, cols } = schema;
+
+		let _toStrs = null;
+		let _toArrs = null;
+		let _toObjs = null;
+		let _toDeep = null;
+
+		let _toCols = null;
+
+		let streamChunkNum = 0;
+		let streamState = 0;
+		let streamCb = null;
+		let pendChunk = '';
+		let prevUnparsed = '';
+
+		let buf = null;
+
+		function reset() {
+			streamState = streamChunkNum = 0;
+			prevUnparsed = pendChunk = '';
+			streamCb = buf = null;
+		}
+
+		let accum    = (rows, add) => { add(rows); };
+		let initRows = () => [];
+		let initCols = () => cols.map(c => []);
+		let addRows  = rows => { buf.push(...rows); };
+		let addCols  = cols => { cols.forEach((vals, ci) => { buf[ci].push(...vals); }); };
+
+		function gen(accInit, accAppend, genConvertRows) {
+			let convertRows = null;
+
+			return (csvStr, cb = accum) => {
+				convertRows ??= genConvertRows();
+
+				buf ??= accInit();
+				let out = buf;
+				let withEOF = streamState === 0 || streamState === 2;
+
+				let skip = streamChunkNum === 0 ? header : 0;
+
+				parse(csvStr, schema, (rows, partial) => {
+					prevUnparsed = partial;
+					let res = cb(convertRows(rows), accAppend);
+
+					if (res === false && streamState !== 0)
+						reset();
+
+					return res;
+				}, skip, withEOF, chunkSize);
+
+				if (withEOF)
+					buf = null;
+
+				return out;
+			};
+		}
+
+		return {
+			schema,
+
+			stringArrs: gen(initRows, addRows, () => {
+				_toStrs ??= rows => rows;
+				return _toStrs;
+			}),
+
+			typedArrs: gen(initRows, addRows, () => {
+				_toArrs ??= genToTypedRows(cols, false, false);
+				return _toArrs;
+			}),
+
+			typedObjs: gen(initRows, addRows, () => {
+				_toObjs ??= genToTypedRows(cols, true, false);
+				return _toObjs;
+			}),
+
+			typedDeep: gen(initRows, addRows, () => {
+				_toDeep ??= genToTypedRows(cols, true, true);
+				return _toDeep;
+			}),
+
+			typedCols: gen(initCols, addCols, () => {
+				_toArrs ??= genToTypedRows(cols, false, false);
+				_toCols ??= genToCols(cols);
+
+				return rows => _toCols(_toArrs(rows));
+			}),
+
+			chunk(csvStr, cb) {
+				streamCb ??= cb;
+
+				let out = null;
+
+				if (streamState === 1) {
+					out = streamCb(prevUnparsed + pendChunk);
+					streamChunkNum++;
+				}
+
+				pendChunk = csvStr;
+				streamState = 1;
+				return out;
+			},
+			end() {
+				streamState = 2;
+				let out = streamCb(prevUnparsed + pendChunk);
+				reset();
+				return out;
+			},
+		};
+	}
+
+	function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
 		let [ rowDelim, colDelim, colQuote ] = schema.delims;
 
 		let numCols = _maxCols || schema.cols.length;
@@ -292,16 +386,16 @@ var uDSV = (function (exports) {
 				rows.push(row);
 
 				if (rows.length === chunkSize) {
-					cb(rows, numChunks++, '');
+					cb(rows, '');
 					rows = [];
 
-					if (_limit && numChunks === chunkLimit)
+					if (_limit && ++numChunks === chunkLimit)
 						return;
 				}
 			}
 
 			if (rows.length > 0 || partial !== '')
-				cb(rows, numChunks++, partial);
+				cb(rows, partial);
 
 			return;
 		}
@@ -362,13 +456,13 @@ var uDSV = (function (exports) {
 							lastColIdx = filledColIdx;
 						}
 
-						rows.push(row);
+						--skip < 0 && rows.push(row);
 
 						if (rows.length === chunkSize) {
-							cb(rows, numChunks++, '');
+							let stop = cb(rows, '') === false;
 							rows = [];
 
-							if (_limit && numChunks === chunkLimit)
+							if (stop || _limit && ++numChunks === chunkLimit)
 								return;
 						}
 
@@ -448,13 +542,13 @@ var uDSV = (function (exports) {
 							lastColIdx = filledColIdx;
 						}
 
-						rows.push(row);
+						--skip < 0 && rows.push(row);
 
 						if (rows.length === chunkSize) {
-							cb(rows, numChunks++, '');
+							let stop = cb(rows, '') === false;
 							rows = [];
 
-							if (_limit && numChunks === chunkLimit)
+							if (stop || _limit && ++numChunks === chunkLimit)
 								return;
 						}
 
@@ -490,7 +584,7 @@ var uDSV = (function (exports) {
 
 		if (withEOF && colIdx === lastColIdx) {
 			row[colIdx] = v;
-			rows.push(row);
+			--skip < 0 && rows.push(row);
 			inCol = 0;
 		}
 
@@ -502,10 +596,10 @@ var uDSV = (function (exports) {
 			)
 		);
 
-		cb(rows, numChunks++, partial ? csvStr.slice(linePos) : '');
+		cb(rows, partial ? csvStr.slice(linePos) : '');
 	}
 
-	exports.parse = parse;
+	exports.parser = parser;
 	exports.schema = schema;
 
 	return exports;
