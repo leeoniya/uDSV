@@ -186,9 +186,8 @@ function genToCols(cols) {
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 // skip?
-function schema(csvStr, colDelim, colQuote, rowDelim, maxRows, maxBytes) {
-	maxRows  ??= 10;
-	maxBytes ??= 4 * 1024; // 4KB
+function schema(csvStr, colDelim, colQuote, rowDelim, maxRows) {
+	maxRows ??= 10;
 
 	// will fail if header contains line breaks in quoted value
 	// will fail if single line without line breaks
@@ -210,10 +209,8 @@ function schema(csvStr, colDelim, colQuote, rowDelim, maxRows, maxBytes) {
 
 	const _maxCols = firstRowStr.split(colDelim).length;
 
-	const sampleStr = maxBytes < csvStr.length ? csvStr.slice(0, maxBytes) : csvStr;
-
 	const firstRows = [];
-	parse(sampleStr, schema, chunk => firstRows.push(...chunk), 0, sampleStr.length === csvStr.length, maxRows, 1, _maxCols);
+	parse(csvStr, schema, chunk => { firstRows.push(...chunk); }, 0, true, maxRows, 1, _maxCols);
 
 	firstRows.shift().forEach((colName, colIdx) => {
 		let type = guessType(colIdx, firstRows);
@@ -362,7 +359,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 	// this no-quote block is a 10% perf boost in V8, and 2x boost in JSC
 	// it can be fully omitted without breaking anything
-	if (colQuote === '') {
+	if (!_probe && colQuote === '') {
 		let lines = csvStr.split(rowDelim);
 
 		let partial = '';
