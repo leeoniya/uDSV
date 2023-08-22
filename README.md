@@ -31,7 +31,9 @@ Of course, _most_ of these are [table stakes](https://en.wikipedia.org/wiki/Tabl
 
 Is it Lightning Fast™ or Blazing Fast™?
 
-No, those are too slow! μDSV reaches [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0)!
+No, those are too slow!
+
+μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0)
 
 It's impossible to communicate the necessary nuance in a single statement, but on my Ryzen 7 ThinkPad with Linux v6.4.11/NodeJS v20.5.1, I see 1x-5x single threaded performance improvements relative to [Papa Parse](https://www.papaparse.com/). I use Papa Parse as a reference not because it's the fastest (spoiler: it isn't), but due to its [massive popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its own performance claims. μDSV is _also_ faster than the fastest existing libraries in all benchmarks.
 
