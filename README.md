@@ -149,13 +149,15 @@ To bypass this auto-accumulation behavior, simply pass your own handler as the t
 
 let sum = 0;
 
+let reducer = (rows) => {
+  for (let i = 0; i < rows.length; i++) {
+    sum += rows[i][3]; // sum fourth column
+  }
+};
+
 for await (const strChunk of textStream) {
   parser ??= initParser(inferSchema(strChunk));
-  parser.chunk(strChunk, parser.typedArrs, (rows) => { // using typedArrs
-    for (let i = 0; i < rows.length; i++) {
-      sum += rows[i][3]; // sum fourth column
-    }
-  });
+  parser.chunk(strChunk, parser.typedArrs, reducer); // typedArrs + reducer
 }
 
 parser.end();
