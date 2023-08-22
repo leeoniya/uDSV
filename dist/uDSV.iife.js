@@ -188,8 +188,7 @@ var uDSV = (function (exports) {
 	}
 
 	// https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
-	// skip?
-	function schema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
+	function inferSchema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
 		// by default, grab first row, and skip it
 		headerFn ??= firstRows => [firstRows[0]];
 
@@ -247,7 +246,7 @@ var uDSV = (function (exports) {
 		return schema;
 	}
 
-	function parser(schema, chunkSize) {
+	function initParser(schema, chunkSize) {
 		let { skip, cols } = schema;
 
 		let _toStrs = null;
@@ -616,8 +615,8 @@ var uDSV = (function (exports) {
 		cb(rows, partial ? csvStr.slice(linePos) : '');
 	}
 
-	exports.parser = parser;
-	exports.schema = schema;
+	exports.inferSchema = inferSchema;
+	exports.initParser = initParser;
 
 	return exports;
 

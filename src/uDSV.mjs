@@ -177,7 +177,7 @@ function genToCols(cols) {
 }
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
-export function schema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
+export function inferSchema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
 	// by default, grab first row, and skip it
 	headerFn ??= firstRows => [firstRows[0]];
 
@@ -235,7 +235,7 @@ export function schema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) 
 	return schema;
 }
 
-export function parser(schema, chunkSize) {
+export function initParser(schema, chunkSize) {
 	let { skip, cols } = schema;
 
 	let _toStrs = null;

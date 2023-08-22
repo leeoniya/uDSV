@@ -1,4 +1,4 @@
-import { schema, parser } from '../src/uDSV.mjs';
+import { inferSchema, initParser } from '../src/uDSV.mjs';
 import Papa from 'papaparse';
 
 import { strict as assert } from 'node:assert';
@@ -218,11 +218,11 @@ test('correctness using Papa as reference', (t) => {
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         let ref = Papa.parse(csvStr).data;
 
-        let s = schema(csvStr);
-        s.skip = 0;
-        let p = parser(s);
+        let schema = inferSchema(csvStr);
+        schema.skip = 0;
+        let parser = initParser(schema);
 
-        let rows = p.stringArrs(csvStr);
+        let rows = parser.stringArrs(csvStr);
 
         assert.deepEqual(ref, rows);
     }
@@ -263,8 +263,8 @@ test('typed cols', (t) => {
 */
 
 test('typed objs (deep)', (t) => {
-    let p = parser(schema(deepObjs));
-    let rows = p.typedDeep(deepObjs);
+    let parser = initParser(inferSchema(deepObjs));
+    let rows = parser.typedDeep(deepObjs);
 
     assert.deepEqual(rows, [{
         _type: 'item',
@@ -290,10 +290,10 @@ test('variable size chunks (incremental/streaming)', async (t) => {
 
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         // reference non-iterative parse
-        let s  = schema(csvStr);
-        s.skip = 0;
-        let p = parser(s);
-        let rows = p.stringArrs(csvStr);
+        let schema  = inferSchema(csvStr);
+        schema.skip = 0;
+        let parser = initParser(schema);
+        let rows = parser.stringArrs(csvStr);
 
         // console.log(rows);
 
@@ -306,10 +306,10 @@ test('variable size chunks (incremental/streaming)', async (t) => {
 
         for (let chunkSize = minChunkSize; chunkSize < maxChunkSize; chunkSize++) {
             chunkString(csvStr, chunkSize).forEach(chunk => {
-                p.chunk(chunk, p.stringArrs);
+                parser.chunk(chunk, parser.stringArrs);
             });
 
-            let rowsIncr = p.end();
+            let rowsIncr = parser.end();
 
             // await t.test(`${dataKey}, chunkSize: ${chunkSize}`, t2 => {
                 assert.deepEqual(rows, rowsIncr);
