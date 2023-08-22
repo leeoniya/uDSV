@@ -19,8 +19,8 @@ What does μDSV pack into 5KB?
 - [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180)-compliant
 - Customizable delimiters for rows and columns, with auto-detection
 - Header skipping and column renaming
-- Schema inference and value typing: string, number, boolean, date, json
-- Defined handling of null, NaN, and empty strings
+- Schema inference and value typing: `string`, `number`, `boolean`, `date`, `json`
+- Defined handling of `''`, `'null'`, `'NaN'`
 - Incremental or full parsing, with optional accumulation
 - Multiple outputs: arrays (tuples), objects, nested objects, columnar arrays
 
