@@ -224,7 +224,7 @@ test('correctness using Papa as reference', (t) => {
 
         let rows = parser.stringArrs(csvStr);
 
-        assert.deepEqual(ref, rows);
+        assert.deepEqual(rows, ref);
     }
 });
 
@@ -312,7 +312,7 @@ test('variable size chunks (incremental/streaming)', async (t) => {
             let rowsIncr = parser.end();
 
             // await t.test(`${dataKey}, chunkSize: ${chunkSize}`, t2 => {
-                assert.deepEqual(rows, rowsIncr);
+                assert.deepEqual(rowsIncr, rows);
             // });
         }
     }

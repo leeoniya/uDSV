@@ -376,72 +376,85 @@ var uDSV = (function (exports) {
 		let _probe = _maxCols != null && _limit;
 
 		let rowDelimLen = rowDelim.length;
+		let colDelimLen = colDelim.length;
 
 		let numChunks = 0;
-
-		// this no-quote block is a 10% perf boost in V8, and 2x boost in JSC
-		// it can be fully omitted without breaking anything
-		if (!_probe && colQuote === '') {
-			let lines = csvStr.split(rowDelim);
-
-			let partial = '';
-			let len = lines.length;
-
-			if (!withEOF) {
-				len -= 1;
-				partial = lines[len];
-			}
-
-			let rows = [];
-
-			for (let i = 0; i < len; i++) {
-				let line = lines[i];
-
-				let row = line.split(colDelim);
-
-				rows.push(row);
-
-				if (rows.length === chunkSize) {
-					cb(rows, '');
-					rows = [];
-
-					if (_limit && ++numChunks === chunkLimit)
-						return;
-				}
-			}
-
-			if (rows.length > 0 || partial !== '')
-				cb(rows, partial);
-
-			return;
-		}
-
-		let quoteChar = colQuote == '' ? 0 : colQuote.charCodeAt(0);
-		let rowDelimChar = rowDelim.charCodeAt(0);
-		let colDelimChar = colDelim.charCodeAt(0);
-
-		// should this be * to handle ,, ?
-		const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
-
-		const rowTpl = Array(numCols).fill('');
-
-		// 0 = no
-		// 1 = unquoted
-		// 2 = quoted
-		let inCol = 0;
 
 		let pos = 0;
 		let endPos = csvStr.length - 1;
 		let linePos = 0;
 
 		let rows = [];
-		let v = "";
+		let rowTpl = Array(numCols).fill('');
 		let row = rowTpl.slice();
 
 		let colIdx = 0;
 		let lastColIdx = numCols - 1;
 		let filledColIdx = -1;
 
+		if (colQuote === '') {
+			while (pos <= endPos) {
+				if (colIdx === lastColIdx) {
+					let pos2 = csvStr.indexOf(rowDelim, pos);
+
+					if (pos2 === -1) {
+						if (!withEOF)
+							break;
+
+						pos2 = endPos + 1;
+					}
+
+					row[colIdx] = csvStr.slice(pos, pos2);
+
+					--skip < 0 && rows.push(row);
+
+					if (rows.length === chunkSize) {
+						let stop = cb(rows, '') === false;
+						rows = [];
+
+						if (stop || _limit && ++numChunks === chunkLimit)
+							return;
+					}
+
+					row = rowTpl.slice();
+					colIdx = 0;
+					filledColIdx = -1;
+					pos = pos2 + rowDelimLen;
+					linePos = pos;
+				}
+				else {
+					let pos2 = csvStr.indexOf(colDelim, pos);
+
+					if (pos2 === -1) {
+						if (!withEOF)
+							break;
+					}
+
+					row[colIdx] = csvStr.slice(pos, pos2);
+					pos = pos2 + colDelimLen;
+					filledColIdx = colIdx++;
+				}
+			}
+
+			if (!withEOF || rows.length > 0)
+				cb(rows, !withEOF ? csvStr.slice(linePos) : '');
+
+			return;
+		}
+
+		let quoteChar    = colQuote.charCodeAt(0);
+		let rowDelimChar = rowDelim.charCodeAt(0);
+		let colDelimChar = colDelim.charCodeAt(0);
+
+		// should this be * to handle ,, ?
+		const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
+
+		// 0 = no
+		// 1 = unquoted
+		// 2 = quoted
+		let inCol = 0;
+
+		let v = "";
 		let c;
 
 		while (pos <= endPos) {
