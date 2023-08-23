@@ -5,8 +5,8 @@ A [faster](#performance) CSV parser in [5KB (min)](https://github.com/leeoniya/u
 ---
 ### Introduction
 
-μDSV is a [faster](#performance) JS library for parsing well-formed CSV strings, either at once from memory or incrementally from disk or network.
-It is mostly [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180)-compliant, with support for quoted values containing commas, escaped quotes, and line breaks¹.
+μDSV is a fast JS library for parsing well-formed CSV strings, either from memory or incrementally from disk or network.
+It is mostly [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180) compliant, with support for quoted values containing commas, escaped quotes, and line breaks¹.
 The aim of this project is to handle the 99.5% use-case without adding complexity and performance trade-offs to support the remaining 0.5%.
 
 ¹ Line breaks (`\n`,`\r`,`\r\n`) within quoted values must match the row separator.
@@ -16,7 +16,7 @@ The aim of this project is to handle the 99.5% use-case without adding complexit
 
 What does μDSV pack into 5KB?
 
-- [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180)-compliant
+- [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180) compliant
 - Customizable delimiters for rows and columns, with auto-detection
 - Header skipping and column renaming
 - Schema inference and value typing: `string`, `number`, `boolean`, `date`, `json`
@@ -24,20 +24,19 @@ What does μDSV pack into 5KB?
 - Incremental or full parsing, with optional accumulation
 - Multiple outputs: arrays (tuples), objects, nested objects, columnar arrays
 
-Of course, _most_ of these are [table stakes](https://en.wikipedia.org/wiki/Table_stakes#Other_uses) for CSV parsers :)
+Of course, _most_ of these are table stakes for CSV parsers :)
 
 ---
 ### Performance
 
 Is it Lightning Fast™ or Blazing Fast™?
 
-No, those are too slow!
+No, those are too slow! μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0).
 
-μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0)
+It's impossible to communicate the necessary nuance in a single statement, but on my Ryzen 7 ThinkPad with Linux v6.4.11/NodeJS v20.5.1, I see 1x-5x single threaded performance improvement relative to [Papa Parse](https://www.papaparse.com/). I use Papa Parse as a reference not because it's the fastest (spoiler: it isn't), but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
 
-It's impossible to communicate the necessary nuance in a single statement, but on my Ryzen 7 ThinkPad with Linux v6.4.11/NodeJS v20.5.1, I see 1x-5x single threaded performance improvements relative to [Papa Parse](https://www.papaparse.com/). I use Papa Parse as a reference not because it's the fastest (spoiler: it isn't), but due to its [massive popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its own performance claims. μDSV is _also_ faster than the fastest existing libraries in all benchmarks.
-
-For the full benchmark writeup + runnable source of 20+ tested CSV parsers, multiple real-world datasets, parsing parity commentary, and Bun.js, head over to [/bench](/bench)...and don't forget your coffee!
+μDSV outpaced 20+ tested parsers across a diverse range real-world datasets and parsing options.
+For the full benchmark writeup + source, parsing parity commentary, and Bun.js goodness, head over to [/bench](/bench)...and don't forget your coffee!
 
 ---
 ### Installation
@@ -100,7 +99,7 @@ let typedDeep = parser2.typedDeep(csvStr2);
 
 μDSV has no inherent knowledge of streams.
 Instead, it exposes a generic incremental parsing API to which you can pass sequential chunks.
-These chunks can be come from various sources, such as a [Web Stream](https://css-tricks.com/web-streams-everywhere-and-fetch-for-node-js/) or [Node stream](https://nodejs.org/api/stream.html) via `fetch()` or `fs`, a [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API), etc.
+These chunks can come from various sources, such as a [Web Stream](https://css-tricks.com/web-streams-everywhere-and-fetch-for-node-js/) or [Node stream](https://nodejs.org/api/stream.html) via `fetch()` or `fs`, a [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API), etc.
 
 Here's what it looks like with Node's [fs.createReadStream()](https://nodejs.org/api/fs.html#fscreatereadstreampath-options):
 
