@@ -142,15 +142,19 @@ var uDSV = (function (exports) {
 			buf = JSON.stringify(tplObj).replace(/"¦(\d+)¦"/g, (m, ci) => getValParseExpr(+ci, cols[+ci]));
 		}
 		else {
-			buf = objs ? '{' : '[';
+			if (!objs && cols.every(c => c.type === T_STRING))
+				buf = 'r';
+			else {
+				buf = objs ? '{' : '[';
 
-			cols.forEach((col, ci) => {
-				buf += objs ? `"${col.name.replaceAll('"', '\\"')}":` : '';
-				let parseVal = getValParseExpr(ci, col);
-				buf += `${parseVal},`;
-			});
+				cols.forEach((col, ci) => {
+					buf += objs ? `"${col.name.replaceAll('"', '\\"')}":` : '';
+					let parseVal = getValParseExpr(ci, col);
+					buf += `${parseVal},`;
+				});
 
-			buf += objs ? '}' : ']';
+				buf += objs ? '}' : ']';
+			}
 		}
 
 		// r.trim()?
