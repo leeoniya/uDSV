@@ -70,10 +70,10 @@ function guessType(ci, rows) {
 		let v = row[ci];
 
 		t = (
-			ISO8601.test(v)                     ? T_DATE                        :
-			!Number.isNaN(Number.parseFloat(v)) ? T_NUMBER                      :
-			BOOL_RE.test(v)                     ? T_BOOLEAN + ':' + boolTrue(v) :
-			isJSON(v)                           ? T_JSON                        :
+			ISO8601.test(v) ? T_DATE                        :
+			+v === +v       ? T_NUMBER                      :
+			BOOL_RE.test(v) ? T_BOOLEAN + ':' + boolTrue(v) :
+			isJSON(v)       ? T_JSON                        :
 			t
 		);
 	}
@@ -89,7 +89,7 @@ function getValParseExpr(ci, col) {
 	let parseExpr =
 		type    === T_DATE    ? `new Date(${rv})`                             :
 		type    === T_JSON    ? `JSON.parse(${rv})`                           :
-		type    === T_NUMBER  ? `Number.parseFloat(${rv})`                    :
+		type    === T_NUMBER  ? `+${rv}`                                      :
 		type[0] === T_BOOLEAN ? `${rv} === '${type.slice(2)}' ? true : false` :
 		rv;
 
@@ -221,7 +221,7 @@ function inferSchema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
 	let skip = schema.skip = headerRows.length;
 
 	// first non-null row
-	let colNames = headerRows.find(row => row != null);
+	let colNames = headerRows.find(row => row != null) ?? [...Array(firstRows[0].length).keys()];
 
 	firstRows.splice(0, skip);
 

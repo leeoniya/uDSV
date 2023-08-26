@@ -58,6 +58,7 @@ s,psia,psia,K,K,Hz,A,psia,psia,K,K,Hz,A,psia,psia,K,K,Hz,A,%,psia,psia,degF,degF
 
 // https://earthquake.usgs.gov/earthquakes/feed/v1.0/csv.php
 // https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv
+// https://github.com/mafintosh/csv-parser/blob/master/test/fixtures/large-dataset.csv
 // only necessary things quoted
 // dates, empty cols
 const earthquakes = `
