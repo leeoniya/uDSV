@@ -55,7 +55,7 @@ const T_BOOLEAN = 'b';
 function guessType(ci, rows) {
 	// row with a value to analyze
 	// trim()?
-	let row = rows.find(r =>
+	let row = rows.findLast(r =>
 		r[ci] !== ''     &&
 		r[ci] !== 'null' &&
 		r[ci] !== 'NULL' &&
