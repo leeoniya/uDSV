@@ -14,16 +14,16 @@ Fortunately, we don't have to rely on bench-marketing or 2017-era proclamations.
     <td>2023-09</td>
   </tr>
   <tr>
-    <th>Machine</th>
-    <td>ThinkPad P14s, 48GB RAM, <a href="https://www.amd.com/en/products/apu/amd-ryzen-7-pro-5850u">AMD Ryzen 7 PRO 5850U</a><br>(1.9GHz / 7nm / 15W TDP)</td>
+    <th>Hardware</th>
+    <td>
+      CPU: <a href="https://www.amd.com/en/products/apu/amd-ryzen-7-pro-5850u">Ryzen 7 PRO 5850U</a> (1.9GHz, 7nm, 15W TDP)<br>
+      RAM: 48GB<br>
+      SSD: Samsung SSD 980 PRO 1TB (NVMe)<br>
+    </td>
   </tr>
   <tr>
     <th>OS</th>
     <td>EndeavourOS (Arch Linux)<br>v6.4.11-arch2-1 x86_64</td>
-  </tr>
-  <tr>
-    <th>Storage</th>
-    <td>Samsung SSD 980 PRO 1TB (NVMe)</td>
   </tr>
   <tr>
     <th>NodeJS</th>
@@ -157,20 +157,20 @@ Here's the output for each dataset:
 
 Notes:
 
-1. Bizzarely, the throughput of many parsers drops off a cliff with integer strings, even though we're not actually converting anything to integers, the memory usage is unchanged, and the dataset is 50% smaller.
-2. A significant portion exhibits 40%-60% performance deterioration when quotes are introduced.
-3. Despite enabling `.supportQuotedField(true)`, CSVtoJSON does not properly remove the wrapping quotes from column names.
+- Bizzarely, the throughput of many parsers drops off a cliff with integer strings, even though we're not actually converting anything to integers, the memory usage is unchanged, and the dataset is 50% smaller.
+- A significant portion exhibits 40%-60% performance deterioration when quotes are introduced.
+- Despite enabling `.supportQuotedField(true)`, CSVtoJSON does not properly remove the wrapping quotes from column names.
 
 ---
-### Real World Datasets
+### Real Datasets
 
 Synthetic datsets can be too uniform to extrapolate actual performance in production environments.
 Testing with real data can surface inefficiencies in code paths that were either bypassed or infrequently executed.
 
 
-Sensor data:
+**Sensors Time Series**
 
-https://github.com/Schlumberger/hackathon/blob/master/backend/dataset/data-large.csv
+https://github.com/Schlumberger/hackathon/blob/master/backend/dataset/data-large.csv<br>
 
 - 36 MB
 - 37 cols x 130K rows
@@ -226,3 +226,161 @@ Notes:
 
 - With this 36MB dataset, all the faster libs bump into the 2GB memory limit. With GC'd/JIT'ed runtimes, lower peak memory does not imply faster perf (as was the correlation in the synthetic runs).
 - uDSV is not faster by the same huge margin over PapaParse as in the synthetic `litmus_ints.csv` case  where it was 273 MiB/s vs 74 MiB/s.
+
+
+**USA ZIP Codes**
+
+https://simplemaps.com/data/us-zips<br>
+https://simplemaps.com/static/data/us-zips/1.82/basic/simplemaps_uszips_basicv1.82.zip<br>
+
+- 6 MB
+- 18 cols x 34K rows
+- everything quoted
+- strings, numbers, booleans, JSON (with escaped quotes)
+
+```csv
+"zip","lat","lng","city","state_id","state_name","zcta","parent_zcta","population","density","county_fips","county_name","county_weights","county_names_all","county_fips_all","imprecise","military","timezone"
+"00601","18.18027","-66.75266","Adjuntas","PR","Puerto Rico","TRUE","","17126","102.6","72001","Adjuntas","{""72001"": 98.73, ""72141"": 1.27}","Adjuntas|Utuado","72001|72141","FALSE","FALSE","America/Puerto_Rico"
+"00602","18.36075","-67.17541","Aguada","PR","Puerto Rico","TRUE","","37895","482.5","72003","Aguada","{""72003"": 100}","Aguada","72003","FALSE","FALSE","America/Puerto_Rico"
+"00603","18.45744","-67.12225","Aguadilla","PR","Puerto Rico","TRUE","","49136","552.4","72005","Aguadilla","{""72005"": 99.76, ""72099"": 0.24}","Aguadilla|Moca","72005|72099","FALSE","FALSE","America/Puerto_Rico"
+"00606","18.16585","-66.93716","Maricao","PR","Puerto Rico","TRUE","","5751","50.1","72093","Maricao","{""72093"": 82.26, ""72153"": 11.68, ""72121"": 6.06}","Maricao|Yauco|Sabana Grande","72093|72153|72121","FALSE","FALSE","America/Puerto_Rico"
+"00610","18.2911","-67.12243","Anasco","PR","Puerto Rico","TRUE","","26153","272.1","72011","Añasco","{""72011"": 96.71, ""72099"": 2.81, ""72083"": 0.37, ""72003"": 0.11}","Añasco|Moca|Las Marías|Aguada","72011|72099|72083|72003","FALSE","FALSE","America/Puerto_Rico"
+"00611","18.27698","-66.80688","Angeles","PR","Puerto Rico","TRUE","","1283","46.5","72141","Utuado","{""72141"": 100}","Utuado","72141","FALSE","FALSE","America/Puerto_Rico"
+"00612","18.41283","-66.7051","Arecibo","PR","Puerto Rico","TRUE","","64090","325.0","72013","Arecibo","{""72013"": 98.86, ""72065"": 0.94, ""72017"": 0.2}","Arecibo|Hatillo|Barceloneta","72013|72065|72017","FALSE","FALSE","America/Puerto_Rico"
+"00616","18.41878","-66.6679","Bajadero","PR","Puerto Rico","TRUE","","10186","361.3","72013","Arecibo","{""72013"": 100}","Arecibo","72013","FALSE","FALSE","America/Puerto_Rico"
+"00617","18.44598","-66.56006","Barceloneta","PR","Puerto Rico","TRUE","","22803","479.7","72017","Barceloneta","{""72017"": 99.63, ""72054"": 0.37}","Barceloneta|Florida","72017|72054","FALSE","FALSE","America/Puerto_Rico"
+"00622","17.98892","-67.1566","Boqueron","PR","Puerto Rico","TRUE","","7751","96.0","72023","Cabo Rojo","{""72023"": 100}","Cabo Rojo","72023","FALSE","FALSE","America/Puerto_Rico"
+"00623","18.08429","-67.15336","Cabo Rojo","PR","Puerto Rico","TRUE","","39652","390.6","72023","Cabo Rojo","{""72023"": 100}","Cabo Rojo","72023","FALSE","FALSE","America/Puerto_Rico"
+```
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ uszips.csv (6 MB, 18 cols x 34K rows)                                                                                                                                                        │
+├────────────────────────┬────────┬────────────────────────────────────────────────────────┬─────────────────────────────────────┬────────┬────────────────────────────────────────────────────┤
+│ Name                   │ Rows/s │ Throughput (MiB/s)                                     │ RSS above 49 MiB baseline (MiB)     │ Types  │ Sample                                             │
+├────────────────────────┼────────┼────────────────────────────────────────────────────────┼─────────────────────────────────────┼────────┼────────────────────────────────────────────────────┤
+│ uDSV                   │ 783K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 140 │ ░░░░░░░░░░░░ 525                    │ string │ [["00602","18.36075","-67.17541","Aguada","PR","Pu │
+│ achilles-csv-parser    │ 474K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 84.7                   │ ░░░░░░░░░░ 431                      │ string │ [{"zip":"00602","lat":"18.36075","lng":"-67.17541" │
+│ d3-dsv                 │ 433K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 77.4                      │ ░░░░░░░░ 364                        │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ PapaParse              │ 317K   │ ░░░░░░░░░░░░░░░░░░░░░ 56.6                             │ ░░░░░░░░ 367                        │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ csv42                  │ 304K   │ ░░░░░░░░░░░░░░░░░░░░ 54.3                              │ ░░░░░░░░ 333                        │ string │ [{"zip":"00602","lat":"18.36075","lng":"-67.17541" │
+│ csv-js                 │ 300K   │ ░░░░░░░░░░░░░░░░░░░░ 53.6                              │ ░░░░░░░░░░░░ 516                    │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ comma-separated-values │ 260K   │ ░░░░░░░░░░░░░░░░░ 46.4                                 │ ░░░░░░░ 311                         │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ SheetJS (native)       │ 252K   │ ░░░░░░░░░░░░░░░░░ 45.1                                 │ ░░░░░░░░░░░░░░ 635                  │ object │ [[{"t":"s","v":"00601"},{"t":"s","v":"18.18027"},{ │
+│ CSVtoJSON              │ 248K   │ ░░░░░░░░░░░░░░░░ 44.3                                  │ ░░░░░░░░░░░ 505                     │ string │ [{"\"zip\"":"00602","\"lat\"":"18.36075","\"lng\"" │
+│ csv-simple-parser      │ 247K   │ ░░░░░░░░░░░░░░░░ 44.1                                  │ ░░░░░░░░░ 417                       │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ csv-parser (neat-csv)  │ 233K   │ ░░░░░░░░░░░░░░░ 41.6                                   │ ░░░░░░░░ 329                        │ string │ [{"zip":"00602","lat":"18.36075","lng":"-67.17541" │
+│ @vanillaes/csv         │ 202K   │ ░░░░░░░░░░░░░ 36.1                                     │ ░░░░░░░░░░ 438                      │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ node-csvtojson         │ 172K   │ ░░░░░░░░░░░ 30.8                                       │ ░░░░░░░░░ 384                       │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ csv-parse/sync         │ 123K   │ ░░░░░░░░ 22                                            │ ░░░░░░░░ 353                        │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ @fast-csv/parse        │ 77.7K  │ ░░░░░ 13.9                                             │ ░░░░░░░ 326                         │ string │ [{"zip0":"00602","lat1":"18.36075","lng2":"-67.175 │
+│ jquery-csv             │ 57.4K  │ ░░░░ 10.3                                              │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1.4K │ string │ [["00601","18.18027","-66.75266","Adjuntas","PR"," │
+│ but-csv                │ ---    │ ---                                                    │ ---                                 │ ---    │ ERR: Wrong row count, expected: 33790, actual: 1.  │
+│ @gregoranders/csv      │ ---    │ ---                                                    │ ---                                 │ ---    │ ERR: Invalid CSV at 1:109                          │
+└────────────────────────┴────────┴────────────────────────────────────────────────────────┴─────────────────────────────────────┴────────┴────────────────────────────────────────────────────┘
+```
+
+
+**House Price Index**
+
+https://www.fhfa.gov/DataTools/Downloads/Pages/House-Price-Index-Datasets.aspx<br>
+https://www.fhfa.gov/HPI_master.csv<br>
+
+- 10 MB
+- 10 cols x 120K rows
+- only necessary things quoted
+- sometimes empty last col
+- strings, numbers
+
+```csv
+hpi_type,hpi_flavor,frequency,level,place_name,place_id,yr,period,index_nsa,index_sa
+traditional,purchase-only,monthly,USA or Census Division,East North Central Division,DV_ENC,1991,1,100.00,100.00
+traditional,purchase-only,monthly,USA or Census Division,East North Central Division,DV_ENC,1991,2,100.91,100.96
+traditional,purchase-only,monthly,USA or Census Division,East North Central Division,DV_ENC,1991,3,101.31,100.92
+...
+traditional,all-transactions,quarterly,MSA,"Austin-Round Rock-Georgetown, TX",12420,2005,3,163.58,
+traditional,all-transactions,quarterly,MSA,"Austin-Round Rock-Georgetown, TX",12420,2005,4,165.64,
+traditional,all-transactions,quarterly,MSA,"Austin-Round Rock-Georgetown, TX",12420,2006,1,167.68,
+traditional,all-transactions,quarterly,MSA,"Austin-Round Rock-Georgetown, TX",12420,2006,2,173.22,
+```
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ HPI_master.csv (10 MB, 10 cols x 120K rows)                                                                                                                                                   │
+├────────────────────────┬────────┬────────────────────────────────────────────────────────┬──────────────────────────────────────┬────────┬────────────────────────────────────────────────────┤
+│ Name                   │ Rows/s │ Throughput (MiB/s)                                     │ RSS above 49 MiB baseline (MiB)      │ Types  │ Sample                                             │
+├────────────────────────┼────────┼────────────────────────────────────────────────────────┼──────────────────────────────────────┼────────┼────────────────────────────────────────────────────┤
+│ uDSV                   │ 1.78M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 149 │ ░░░░░░░░░░░░░░ 726                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ d3-dsv                 │ 1.37M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 115            │ ░░░░░░░░░░░░░░ 724                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ PapaParse              │ 1.36M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 114            │ ░░░░░░░░░░░░░░ 722                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ but-csv                │ 1.3M   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 110              │ ░░░░░░░░░░░░ 606                     │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ achilles-csv-parser    │ 1.06M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 89.4                    │ ░░░░░░░░░░░░░ 669                    │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ csv42                  │ 1.05M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 88.1                    │ ░░░░░░░░░░░░░░ 683                   │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ SheetJS (native)       │ 707K   │ ░░░░░░░░░░░░░░░░░░░░ 59.4                              │ ░░░░░░░░░░░░░░░░░░░░ 1.02K           │ object │ [[{"t":"s","v":"traditional"},{"t":"s","v":"purcha │
+│ comma-separated-values │ 594K   │ ░░░░░░░░░░░░░░░░░ 49.9                                 │ ░░░░░░░░░░░░░ 667                    │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ csv-js                 │ 515K   │ ░░░░░░░░░░░░░░░ 43.2                                   │ ░░░░░░░░░░░░░░░ 779                  │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ @vanillaes/csv         │ 489K   │ ░░░░░░░░░░░░░░ 41.1                                    │ ░░░░░░░░░░ 504                       │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ CSVtoJSON              │ 451K   │ ░░░░░░░░░░░░░ 37.9                                     │ ░░░░░░░░░░░░░░░░ 785                 │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ csv-parser (neat-csv)  │ 422K   │ ░░░░░░░░░░░░ 35.5                                      │ ░░░░░░░░░░░ 550                      │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ @gregoranders/csv      │ 379K   │ ░░░░░░░░░░░ 31.8                                       │ ░░░░░░░░░░░░░░ 683                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ node-csvtojson         │ 353K   │ ░░░░░░░░░░ 29.7                                        │ ░░░░░░░░░░░░░ 679                    │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ csv-parse/sync         │ 236K   │ ░░░░░░░ 19.9                                           │ ░░░░░░░░░ 423                        │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ jquery-csv             │ 167K   │ ░░░░░ 14                                               │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1.57K │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ @fast-csv/parse        │ 159K   │ ░░░░░ 13.4                                             │ ░░░░░░░░░ 436                        │ string │ [{"hpi_type0":"traditional","hpi_flavor1":"purchas │
+│ csv-simple-parser      │ ---    │ ---                                                    │ ---                                  │ ---    │ ERR: Unexpected newline at index 420365            │
+└────────────────────────┴────────┴────────────────────────────────────────────────────────┴──────────────────────────────────────┴────────┴────────────────────────────────────────────────────┘
+```
+
+
+**Earthquakes**
+
+https://earthquake.usgs.gov/earthquakes/feed/v1.0/csv.php<br>
+https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv<br>
+https://github.com/mafintosh/csv-parser/blob/master/test/fixtures/large-dataset.csv<br>
+
+- 1.1 MB
+- 15 cols x 7.3K rows
+- only necessary things quoted
+- empty cols
+- strings, numbers, dates
+
+```csv
+time,latitude,longitude,depth,mag,magType,nst,gap,dmin,rms,net,id,updated,place,type
+2015-12-22T18:45:11.000Z,59.9988,-152.7191,100,3,ml,,,,0.54,ak,ak12293661,2015-12-22T19:09:29.736Z,"54km S of Redoubt Volcano, Alaska",earthquake
+2015-12-22T18:38:34.000Z,62.9616,-148.7532,65.4,1.9,ml,,,,0.51,ak,ak12293651,2015-12-22T18:47:23.287Z,"48km SSE of Cantwell, Alaska",earthquake
+2015-12-22T18:38:01.820Z,19.2129993,-155.4179993,33.79,2.56,ml,56,142,0.03113,0.21,hv,hv61132446,2015-12-22T18:44:13.729Z,"6km E of Pahala, Hawaii",earthquake
+2015-12-22T18:38:00.000Z,63.7218,-147.083,56.8,2.4,ml,,,,0.95,ak,ak12293653,2015-12-22T18:54:45.265Z,"75km WSW of Delta Junction, Alaska",earthquake
+2015-12-22T18:28:57.000Z,64.0769,-148.8226,14.2,2,ml,,,,0.8,ak,ak12293626,2015-12-22T18:40:06.324Z,"25km NNE of Healy, Alaska",earthquake
+2015-12-22T18:25:40.000Z,61.4715,-150.7697,55,1.6,ml,,,,0.17,ak,ak12293627,2015-12-22T18:40:07.276Z,"43km W of Big Lake, Alaska",earthquake
+2015-12-22T18:13:01.786Z,38.6879,-118.6035,7.8,1.6,ml,10,105.79,0.087,0.0799,nn,nn00523604,2015-12-22T18:26:07.654Z,"18km N of Hawthorne, Nevada",earthquake
+2015-12-22T18:08:44.630Z,19.3326664,-155.1049957,4.52,1.92,md,39,152,0.05121,0.28,hv,hv61132431,2015-12-22T18:11:59.980Z,"17km SE of Volcano, Hawaii",earthquake
+2015-12-22T18:04:36.240Z,19.4381676,-155.326004,1.12,2.05,ml,14,314,0.03707,0.33,hv,hv61132421,2015-12-22T18:10:19.220Z,"9km W of Volcano, Hawaii",earthquake
+2015-12-22T17:47:04.720Z,36.0003319,-120.5598297,2.18,1.74,md,20,86,0.0209,0.06,nc,nc72570651,2015-12-22T17:48:42.120Z,"23km SW of Coalinga, California",earthquake
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ large-dataset.csv (1.1 MB, 15 cols x 7.3K rows)                                                                                                                                             │
+├────────────────────────┬────────┬────────────────────────────────────────────────────────┬────────────────────────────────────┬────────┬────────────────────────────────────────────────────┤
+│ Name                   │ Rows/s │ Throughput (MiB/s)                                     │ RSS above 49 MiB baseline (MiB)    │ Types  │ Sample                                             │
+├────────────────────────┼────────┼────────────────────────────────────────────────────────┼────────────────────────────────────┼────────┼────────────────────────────────────────────────────┤
+│ uDSV                   │ 2.58M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 386 │ ░░░░░░░░ 58.2                      │ string │ [["2015-12-22T18:38:34.000Z","62.9616","-148.7532" │
+│ but-csv                │ 1.53M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 229                     │ ░░░░░░░░ 57.4                      │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ d3-dsv                 │ 1.42M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 213                       │ ░░░░░░░░ 59.1                      │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ achilles-csv-parser    │ 899K   │ ░░░░░░░░░░░░░░░░░░ 134                                 │ ░░░░░░░░░ 59.5                     │ string │ [{"time":"2015-12-22T18:38:34.000Z","latitude":"62 │
+│ csv42                  │ 849K   │ ░░░░░░░░░░░░░░░░░ 127                                  │ ░░░░░░░░░ 60.1                     │ string │ [{"time":"2015-12-22T18:38:34.000Z","latitude":"62 │
+│ PapaParse              │ 840K   │ ░░░░░░░░░░░░░░░░░ 126                                  │ ░░░░░░░░░░░░░░░░░ 120              │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ SheetJS (native)       │ 617K   │ ░░░░░░░░░░░░ 92.3                                      │ ░░░░░░░░░░░░░ 92.2                 │ object │ [[{"t":"s","v":"2015-12-22T18:45:11.000Z"},{"t":"s │
+│ node-csvtojson         │ 604K   │ ░░░░░░░░░░░░ 90.2                                      │ ░░░░░░░░░░░░░░░░ 118               │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ comma-separated-values │ 554K   │ ░░░░░░░░░░░ 82.9                                       │ ░░░░░░░░░ 61                       │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ @vanillaes/csv         │ 342K   │ ░░░░░░░ 51.1                                           │ ░░░░░░░░░░░░░░░░ 117               │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ csv-simple-parser      │ 294K   │ ░░░░░░ 44                                              │ ░░░░░░░░░░░░░░░░░░░░ 143           │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ csv-parser (neat-csv)  │ 284K   │ ░░░░░░ 42.4                                            │ ░░░░░░░░░░░░░░░░░░░░░░░░ 171       │ string │ [{"time":"2015-12-22T18:38:34.000Z","latitude":"62 │
+│ csv-js                 │ 264K   │ ░░░░░░ 39.5                                            │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 222 │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ CSVtoJSON              │ 225K   │ ░░░░░ 33.6                                             │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 211  │ string │ [{"time":"2015-12-22T18:38:34.000Z","latitude":"62 │
+│ @gregoranders/csv      │ 203K   │ ░░░░ 30.4                                              │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 205   │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ csv-parse/sync         │ 159K   │ ░░░░ 23.7                                              │ ░░░░░░░░░░ 68                      │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ jquery-csv             │ 126K   │ ░░░ 18.8                                               │ ░░░░░░░░░░░░░░░░░░░░░░░░░░ 191     │ string │ [["2015-12-22T18:45:11.000Z","59.9988","-152.7191" │
+│ @fast-csv/parse        │ 111K   │ ░░░ 16.6                                               │ ░░░░░░░░░░░░░░░░ 112               │ string │ [{"time0":"2015-12-22T18:38:34.000Z","latitude1":" │
+└────────────────────────┴────────┴────────────────────────────────────────────────────────┴────────────────────────────────────┴────────┴────────────────────────────────────────────────────┘
+```
