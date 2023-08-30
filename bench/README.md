@@ -447,7 +447,7 @@ Since we're here to assess libs and not users, we'll only compare libs with some
 Notes:
 
 - uDSV offers the simplicity of Option #1 with the performance of Option #3.
-- I could not find typing options for these parsers: `but-csv`, `@fast-csv/parse`, `jquery-csv`, `@gregoranders/csv`.
+- I could not find typing options for these parsers: `but-csv`, `@fast-csv/parse`, `jquery-csv`, `@gregoranders/csv`, `@stdlib/utils-dsv-base-parse`.
 - `node-csvtojson` provides typing only via [static column config](https://github.com/Keyang/node-csvtojson#column-parser), so it is excluded for not being generic.
 
 

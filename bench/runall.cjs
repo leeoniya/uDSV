@@ -1,5 +1,7 @@
 // node --max-old-space-size=1536 ./bench/runner.cjs
 
+const CYCLE_DELAY = 10_000;
+
 const baselineRSS = process.memoryUsage().rss;
 
 const fs = require('node:fs');
@@ -59,15 +61,15 @@ let synthData = [
 ];
 
 let realData = [
-  DATA_EARTHQUAKES,
-  DATA_ZIPCODES,
-  DATA_SENSORS,
-  DATA_SENSORS_1HDR,
+  // DATA_EARTHQUAKES,
+  // DATA_ZIPCODES,
+  // DATA_SENSORS,
+  // DATA_SENSORS_1HDR,
   DATA_HOUSE_PRICES,
 ];
 
 let dataPaths = [
-  ...synthData,
+  // ...synthData,
   ...realData,
 ];
 
@@ -126,6 +128,11 @@ let untypedParsers = [
   './non-streaming/untyped/csv-parse.cjs',
   './non-streaming/untyped/jquery-csv.cjs',
   './non-streaming/untyped/fast-csv.cjs',
+  './non-streaming/untyped/utils-dsv-base-parse.cjs',
+
+  // TODO: https://github.com/amin2312/ACsv/tree/main/release/js
+  // TODO: https://github.com/mrodrig/json-2-csv
+  // TODO: https://www.npmjs.com/package/datalib
 ];
 
 let streamingParsers = [
@@ -135,15 +142,14 @@ let streamingParsers = [
   './streaming/untyped/csv-parser.cjs',
   './streaming/untyped/ya-csv.cjs',
   './streaming/untyped/dekkai.cjs',
+  './streaming/untyped/utils-dsv-base-parse.cjs',
 ];
 
 let parserPaths = [
   ...untypedParsers,
-  ...typedParsers,
-  ...streamingParsers,
+  // ...typedParsers,
+  // ...streamingParsers,
 ];
-
-let mode = 1;
 
 let bin = process.argv0;
 
@@ -156,9 +162,9 @@ async function go(parserPath, dataPath, dataSize) {
 
   let result = spawnSync(bin, cmd.concat([
     // `--max-old-space-size=8192`,
-    './bench/run.cjs',
-    `--dataPath=${dataPath}`,
-    `--parserPath=${parserPath}`,
+    './bench/runone.cjs',
+    `--data=${dataPath}`,
+    `--parser=${parserPath}`,
   ]));
 
   if (result.status !== 0)
@@ -253,7 +259,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
       for (let parserPath of parserPaths) {
         await go(parserPath, dataPath, fileSize);
-        await sleep(10_000);
+        await sleep(CYCLE_DELAY);
       }
     }
   } catch (spawnErr) {

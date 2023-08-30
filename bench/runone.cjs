@@ -1,14 +1,13 @@
-// node ./bench/run.cjs --dataPath=./bench/litmus_20c_10000r.csv --parserPath=./streaming/csv-parser.cjs
-// node ./bench/run.cjs --dataPath=./demo/data/15x7.3k-some-quotes.csv --parserPath=./non-streaming/typed/uDSV-objs.cjs
-// node ./bench/run.cjs --dataPath=./bench/data/litmus_ints.csv --parserPath=./non-streaming/untyped/d3-dsv.cjs
+// node ./bench/runone.cjs --parser=./non-streaming/typed/uDSV-arrs.cjs --data=./demo/data/15x7.3k-some-quotes.csv
+
+const BENCH_DUR = 3_000;
 
 const argv = require('yargs-parser')(process.argv.slice(2));
 
-const dataPath = argv.dataPath;
-const parserMod = argv.parserPath;
+const dataPath = argv.data;
+const parserMod = argv.parser;
 
 const fs = require('fs');
-const { bench } = require('./bench.cjs');
 
 const Papa = require('papaparse'); // for output validation
 
@@ -37,6 +36,47 @@ function addType(types, v) {
     types.add('date');
   else if (typeof v === 'object')
     types.add('object');
+}
+
+function geoMean(arr) {
+	let logSum = arr.reduce((acc, val) => acc + Math.log(val), 0);
+	return Math.exp(logSum / arr.length);
+}
+
+const sleep = ms => new Promise(resolve => setImmediate(resolve));
+
+async function bench(csvStr, path, parse) {
+  let durs = [];
+  let rss = [];
+
+  let doneProm = new Promise((resolve, reject) => {
+    (async () => {
+      let cycleStart = performance.now();
+
+      while (true) {
+        let st = performance.now();
+
+        await parse(csvStr, path);
+        await sleep(); // setImmediate (GC)
+
+        let en = performance.now();
+
+        durs.push(en - st);
+        rss.push(process.memoryUsage.rss());
+
+        if (en - cycleStart >= BENCH_DUR) {
+          resolve({
+            gmean: geoMean(durs),
+            rss: Math.max(...rss),
+          });
+
+          break;
+        }
+      }
+    })();
+  });
+
+  return doneProm;
 }
 
 (async () => {
