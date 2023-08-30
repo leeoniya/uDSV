@@ -1,6 +1,7 @@
-// node --max-old-space-size=1536 ./bench/runner.cjs
+// node ./bench/runall.cjs
+// node --max-old-space-size=1536 ./bench/runall.cjs
 
-const CYCLE_DELAY = 10_000;
+const CYCLE_DELAY = 5_000;
 
 const baselineRSS = process.memoryUsage().rss;
 
@@ -62,10 +63,10 @@ let synthData = [
 
 let realData = [
   // DATA_EARTHQUAKES,
-  // DATA_ZIPCODES,
+  DATA_ZIPCODES,
   // DATA_SENSORS,
   // DATA_SENSORS_1HDR,
-  DATA_HOUSE_PRICES,
+  // DATA_HOUSE_PRICES,
 ];
 
 let dataPaths = [
@@ -146,8 +147,8 @@ let streamingParsers = [
 ];
 
 let parserPaths = [
-  ...untypedParsers,
-  // ...typedParsers,
+  // ...untypedParsers,
+  ...typedParsers,
   // ...streamingParsers,
 ];
 
