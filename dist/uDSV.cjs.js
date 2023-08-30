@@ -191,7 +191,17 @@ function genToCols(cols) {
 }
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
-function inferSchema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
+function inferSchema(csvStr, opts, maxRows) {
+	let {
+		header: headerFn,
+		col:    colDelim,
+		row:    rowDelim,
+		encl:   colEncl,
+		esc:    escEncl,
+	//	omit,  // #comments and empty lines (ignore:), needs callback for empty and comments?
+		trim  = false,
+	} = opts ?? {};
+
 	// by default, grab first row, and skip it
 	headerFn ??= firstRows => [firstRows[0]];
 
@@ -205,15 +215,18 @@ function inferSchema(csvStr, headerFn, colDelim, colQuote, rowDelim, maxRows) {
 
 	rowDelim ??= firstRowMatch[2];
 	colDelim ??= COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1) ?? '';
-	colQuote ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
+	colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
+	escEncl  ??= colEncl;
 
 	const schema = {
 		skip: 1, // how many header rows to skip
-		delims: [rowDelim, colDelim, colQuote],
+		col:  colDelim,
+		row:  rowDelim,
+		encl: colEncl,
+		esc:  escEncl,
+		trim: trim,
 		cols: [],
 	};
-
-	// trim values (unquoted, quoted), ignore empty rows, assertTypes, assertQuotes
 
 	const _maxCols = firstRowStr.split(colDelim).length;
 
@@ -370,7 +383,13 @@ function initParser(schema, chunkSize) {
 }
 
 function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
-	let [ rowDelim, colDelim, colQuote ] = schema.delims;
+	let {
+		row:  rowDelim,
+		col:  colDelim,
+		encl: colEncl,
+		esc:  escEncl,
+		trim,
+	} = schema;
 
 	let numCols = _maxCols || schema.cols.length;
 
@@ -395,7 +414,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	let lastColIdx = numCols - 1;
 	let filledColIdx = -1;
 
-	if (colQuote === '') {
+	if (colEncl === '') {
 		while (pos <= endPos) {
 			if (colIdx === lastColIdx) {
 				let pos2 = csvStr.indexOf(rowDelim, pos);
@@ -407,7 +426,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 					pos2 = endPos + 1;
 				}
 
-				row[colIdx] = csvStr.slice(pos, pos2);
+				let s = csvStr.slice(pos, pos2);
+				row[colIdx] = trim ? s.trim() : s;
 
 				--skip < 0 && rows.push(row);
 
@@ -433,7 +453,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						break;
 				}
 
-				row[colIdx] = csvStr.slice(pos, pos2);
+				let s = csvStr.slice(pos, pos2);
+				row[colIdx] = trim ? s.trim() : s;
 				pos = pos2 + colDelimLen;
 				filledColIdx = colIdx++;
 			}
@@ -445,9 +466,11 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		return;
 	}
 
-	let quoteChar    = colQuote.charCodeAt(0);
+	let colEnclChar  = colEncl.charCodeAt(0);
+	let escEnclChar  = escEncl.charCodeAt(0);
 	let rowDelimChar = rowDelim.charCodeAt(0);
 	let colDelimChar = colDelim.charCodeAt(0);
+	let spaceChar    = 32;
 
 	// should this be * to handle ,, ?
 	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
@@ -464,7 +487,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		c = csvStr.charCodeAt(pos);
 
 		if (inCol === 0) {
-			if (c === quoteChar) {
+			if (c === colEnclChar) {
 				inCol = 2;
 				pos += 1;
 
@@ -511,13 +534,20 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 				c = csvStr.charCodeAt(pos);
 			}
-			else
+			else {
+				if (trim && c === spaceChar) {
+					while (c === spaceChar)
+						c = csvStr.charCodeAt(++pos);
+					continue;
+				}
+
 				inCol = 1;
+			}
 		}
 
 		if (inCol === 2) {
 			while (true) {
-				if (c === quoteChar) {
+				if (c === escEnclChar) {
 					if (pos + 1 > endPos) { // TODO: test with chunk ending in closing ", even at EOL but not EOF
 						pos = endPos + 1;
 						break;
@@ -525,8 +555,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 					let cNext = csvStr.charCodeAt(pos + 1);
 
-					if (cNext === quoteChar) {
-						v += colQuote;
+					if (cNext === colEnclChar) {
+						v += colEncl;
 						pos += 2;
 
 						if (pos > endPos) {
@@ -545,7 +575,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 					}
 				}
 				else {
-					let pos2 = csvStr.indexOf(colQuote, pos);
+					let pos2 = csvStr.indexOf(colEncl, pos);
 
 					if (pos2 === -1) {
 						pos = endPos + 1;
@@ -554,7 +584,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 					v += csvStr.slice(pos, pos2);
 					pos = pos2;
-					c = quoteChar;
+					c = colEnclChar;
 				}
 			}
 		}
@@ -607,7 +637,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 					if (pos2 === -1)
 						pos2 = endPos + 1;
 
-					v += csvStr.slice(pos, pos2);
+					let s = csvStr.slice(pos, pos2);
+					v += trim ? s.trim() : s;
 					pos = pos2;
 				}
 			}

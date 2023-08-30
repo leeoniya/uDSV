@@ -13,7 +13,7 @@ module.exports = {
 
       readableStream.on('data', (chunk) => {
         let strChunk = chunk.toString();
-        p ??= initParser(inferSchema(strChunk, null, null, '"'));
+        p ??= initParser(inferSchema(strChunk, { encl: '"' }));
         p.chunk(strChunk, p.stringArrs);
       });
 
