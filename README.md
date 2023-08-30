@@ -167,5 +167,4 @@ parser.end();
 ---
 ### TODO?
 
-- trim whitespace in values (quoted and unquoted)
-- omit empty rows
+- omit (and emit) empty rows and #comment rows
