@@ -313,24 +313,24 @@ traditional,all-transactions,quarterly,MSA,"Austin-Round Rock-Georgetown, TX",12
 ├────────────────────────┬────────┬────────────────────────────────────────────────────────┬──────────────────────────────────────┬────────┬────────────────────────────────────────────────────┤
 │ Name                   │ Rows/s │ Throughput (MiB/s)                                     │ RSS above 49 MiB baseline (MiB)      │ Types  │ Sample                                             │
 ├────────────────────────┼────────┼────────────────────────────────────────────────────────┼──────────────────────────────────────┼────────┼────────────────────────────────────────────────────┤
-│ uDSV                   │ 1.78M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 149 │ ░░░░░░░░░░░░░░ 726                   │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ d3-dsv                 │ 1.37M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 115            │ ░░░░░░░░░░░░░░ 724                   │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ PapaParse              │ 1.36M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 114            │ ░░░░░░░░░░░░░░ 722                   │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ but-csv                │ 1.3M   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 110              │ ░░░░░░░░░░░░ 606                     │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ achilles-csv-parser    │ 1.06M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 89.4                    │ ░░░░░░░░░░░░░ 669                    │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ csv42                  │ 1.05M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 88.1                    │ ░░░░░░░░░░░░░░ 683                   │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ SheetJS (native)       │ 707K   │ ░░░░░░░░░░░░░░░░░░░░ 59.4                              │ ░░░░░░░░░░░░░░░░░░░░ 1.02K           │ object │ [[{"t":"s","v":"traditional"},{"t":"s","v":"purcha │
-│ comma-separated-values │ 594K   │ ░░░░░░░░░░░░░░░░░ 49.9                                 │ ░░░░░░░░░░░░░ 667                    │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ csv-js                 │ 515K   │ ░░░░░░░░░░░░░░░ 43.2                                   │ ░░░░░░░░░░░░░░░ 779                  │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ @vanillaes/csv         │ 489K   │ ░░░░░░░░░░░░░░ 41.1                                    │ ░░░░░░░░░░ 504                       │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ CSVtoJSON              │ 451K   │ ░░░░░░░░░░░░░ 37.9                                     │ ░░░░░░░░░░░░░░░░ 785                 │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ csv-parser (neat-csv)  │ 422K   │ ░░░░░░░░░░░░ 35.5                                      │ ░░░░░░░░░░░ 550                      │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ @gregoranders/csv      │ 379K   │ ░░░░░░░░░░░ 31.8                                       │ ░░░░░░░░░░░░░░ 683                   │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ node-csvtojson         │ 353K   │ ░░░░░░░░░░ 29.7                                        │ ░░░░░░░░░░░░░ 679                    │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ csv-parse/sync         │ 236K   │ ░░░░░░░ 19.9                                           │ ░░░░░░░░░ 423                        │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ jquery-csv             │ 167K   │ ░░░░░ 14                                               │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1.57K │ string │ [["traditional","purchase-only","monthly","USA or  │
-│ @fast-csv/parse        │ 159K   │ ░░░░░ 13.4                                             │ ░░░░░░░░░ 436                        │ string │ [{"hpi_type0":"traditional","hpi_flavor1":"purchas │
-│ csv-simple-parser      │ ---    │ ---                                                    │ ---                                  │ ---    │ ERR: Unexpected newline at index 420365            │
+│ uDSV                   │ 1.79M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 150 │ ░░░░░░░░░░░░░░ 728                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ PapaParse              │ 1.33M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 112             │ ░░░░░░░░░░░░░░ 723                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ d3-dsv                 │ 1.32M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 111              │ ░░░░░░░░░░░░░░ 719                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ but-csv                │ 1.31M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 110              │ ░░░░░░░░░░░░░ 653                    │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ achilles-csv-parser    │ 1.05M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 88.5                    │ ░░░░░░░░░░░░░ 669                    │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ csv42                  │ 1M     │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 84.4                     │ ░░░░░░░░░░░░░ 633                    │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ SheetJS (native)       │ 688K   │ ░░░░░░░░░░░░░░░░░░░░ 57.8                              │ ░░░░░░░░░░░░░░░░░░░░ 1.02K           │ object │ [[{"t":"s","v":"traditional"},{"t":"s","v":"purcha │
+│ csv-simple-parser      │ 571K   │ ░░░░░░░░░░░░░░░░ 48                                    │ ░░░░░░░░░░░░ 612                     │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ comma-separated-values │ 553K   │ ░░░░░░░░░░░░░░░░ 46.4                                  │ ░░░░░░░░░░░░░░ 680                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ csv-js                 │ 527K   │ ░░░░░░░░░░░░░░░ 44.3                                   │ ░░░░░░░░░░░░░░░ 782                  │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ @vanillaes/csv         │ 489K   │ ░░░░░░░░░░░░░░ 41.1                                    │ ░░░░░░░░░░ 506                       │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ CSVtoJSON              │ 480K   │ ░░░░░░░░░░░░░░ 40.3                                    │ ░░░░░░░░░░░░░░░░ 785                 │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ csv-parser (neat-csv)  │ 432K   │ ░░░░░░░░░░░░░ 36.3                                     │ ░░░░░░░░░░░ 544                      │ string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ @gregoranders/csv      │ 380K   │ ░░░░░░░░░░░ 31.9                                       │ ░░░░░░░░░░░░░░ 684                   │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ node-csvtojson         │ 354K   │ ░░░░░░░░░░ 29.7                                        │ ░░░░░░░░░░░░░░░ 770                  │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ csv-parse/sync         │ 233K   │ ░░░░░░░ 19.6                                           │ ░░░░░░░░ 410                         │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ jquery-csv             │ 162K   │ ░░░░░ 13.6                                             │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1.57K │ string │ [["traditional","purchase-only","monthly","USA or  │
+│ @fast-csv/parse        │ 160K   │ ░░░░░ 13.4                                             │ ░░░░░░░░░ 436                        │ string │ [{"hpi_type0":"traditional","hpi_flavor1":"purchas │
 └────────────────────────┴────────┴────────────────────────────────────────────────────────┴──────────────────────────────────────┴────────┴────────────────────────────────────────────────────┘
 ```
 
@@ -488,19 +488,19 @@ Notes:
 ├─────────────────────────────────┬────────┬────────────────────────────────────────────────────────┬────────────────────────────────────┬───────────────┬────────────────────────────────────────────────────┤
 │ Name                            │ Rows/s │ Throughput (MiB/s)                                     │ RSS above 49 MiB baseline (MiB)    │ Types         │ Sample                                             │
 ├─────────────────────────────────┼────────┼────────────────────────────────────────────────────────┼────────────────────────────────────┼───────────────┼────────────────────────────────────────────────────┤
-│ uDSV typed []                   │ 1.52M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 128 │ ░░░░░░░░░░░░░░░░░░░░░ 650          │ number,string │ [["traditional","purchase-only","monthly","USA or  │
-│ csv42 typed {}                  │ 931K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 78.3                   │ ░░░░░░░░░░░░░░░░░░ 560             │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ achilles-csv-parser typed {}    │ 866K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 72.8                     │ ░░░░░░░░░░░░░░░░░░ 565             │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ d3-dsv typed []                 │ 637K   │ ░░░░░░░░░░░░░░░░░░░░░ 53.5                             │ ░░░░░░░░░░░░░░░░░ 518              │ number,string │ [["traditional","purchase-only","monthly","USA or  │
-│ comma-separated-values typed {} │ 579K   │ ░░░░░░░░░░░░░░░░░░░ 48.7                               │ ░░░░░░░░░░░░░░░░░░░░ 618           │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ PapaParse typed []              │ 491K   │ ░░░░░░░░░░░░░░░░░ 41.3                                 │ ░░░░░░░░░░░░░░░░░░░░░░ 692         │ number,string │ [["traditional","purchase-only","monthly","USA or  │
-│ csv-js typed []                 │ 428K   │ ░░░░░░░░░░░░░░░ 36                                     │ ░░░░░░░░░░░░░░░░░ 530              │ number,string │ [["traditional","purchase-only","monthly","USA or  │
-│ CSVtoJSON typed {}              │ 427K   │ ░░░░░░░░░░░░░░░ 35.9                                   │ ░░░░░░░░░░░░░░░░ 493               │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ @vanillaes/csv typed []         │ 391K   │ ░░░░░░░░░░░░░ 32.8                                     │ ░░░░░░░░░░░░░░░░ 489               │ number,string │ [["traditional","purchase-only","monthly","USA or  │
-│ csv-parser (neat-csv) typed {}  │ 380K   │ ░░░░░░░░░░░░░ 31.9                                     │ ░░░░░░░░░░░░░░░░ 503               │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
-│ SheetJS (native) typed          │ 215K   │ ░░░░░░░░ 18.1                                          │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 964 │ object        │ [[{"t":"s","v":"traditional"},{"t":"s","v":"purcha │
-│ csv-parse/sync typed []         │ 39.4K  │ ░░ 3.31                                                │ ░░░░░░░░░░░░░░░░░░░ 593            │ number,string │ [["traditional","purchase-only","monthly","USA or  │
-│ csv-simple-parser typed []      │ ---    │ ---                                                    │ ---                                │ ---           │ ERR: Unexpected newline at index 420365            │
+│ uDSV typed []                   │ 1.5M   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 126 │ ░░░░░░░░░░░░░░░░░░░░░ 647          │ number,string │ [["traditional","purchase-only","monthly","USA or  │
+│ csv42 typed {}                  │ 908K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 76.3                   │ ░░░░░░░░░░░░░░░░░░ 561             │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ achilles-csv-parser typed {}    │ 875K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 73.5                    │ ░░░░░░░░░░░░░░░░░░ 564             │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ d3-dsv typed []                 │ 645K   │ ░░░░░░░░░░░░░░░░░░░░░░ 54.2                            │ ░░░░░░░░░░░░░░░░░ 516              │ number,string │ [["traditional","purchase-only","monthly","USA or  │
+│ comma-separated-values typed {} │ 552K   │ ░░░░░░░░░░░░░░░░░░░ 46.4                               │ ░░░░░░░░░░░░░░░░░░░░░ 643          │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ csv-simple-parser typed []      │ 526K   │ ░░░░░░░░░░░░░░░░░░ 44.2                                │ ░░░░░░░░░░░░░░░ 472                │ number,string │ [["traditional","purchase-only","monthly","USA or  │
+│ PapaParse typed []              │ 506K   │ ░░░░░░░░░░░░░░░░░ 42.5                                 │ ░░░░░░░░░░░░░░░░░░░░░░ 693         │ number,string │ [["traditional","purchase-only","monthly","USA or  │
+│ CSVtoJSON typed {}              │ 450K   │ ░░░░░░░░░░░░░░░░ 37.8                                  │ ░░░░░░░░░░░░░░░░░ 537              │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ csv-js typed []                 │ 438K   │ ░░░░░░░░░░░░░░░ 36.8                                   │ ░░░░░░░░░░░░░░░░░ 532              │ number,string │ [["traditional","purchase-only","monthly","USA or  │
+│ @vanillaes/csv typed []         │ 391K   │ ░░░░░░░░░░░░░░ 32.8                                    │ ░░░░░░░░░░░░░░░░ 492               │ number,string │ [["traditional","purchase-only","monthly","USA or  │
+│ csv-parser (neat-csv) typed {}  │ 384K   │ ░░░░░░░░░░░░░ 32.3                                     │ ░░░░░░░░░░░░░░░░ 493               │ number,string │ [{"hpi_type":"traditional","hpi_flavor":"purchase- │
+│ SheetJS (native) typed          │ 219K   │ ░░░░░░░░ 18.4                                          │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 964 │ object        │ [[{"t":"s","v":"traditional"},{"t":"s","v":"purcha │
+│ csv-parse/sync typed []         │ 39.6K  │ ░░ 3.32                                                │ ░░░░░░░░░░░░░░░░░░ 568             │ number,string │ [["traditional","purchase-only","monthly","USA or  │
 └─────────────────────────────────┴────────┴────────────────────────────────────────────────────────┴────────────────────────────────────┴───────────────┴────────────────────────────────────────────────────┘
 ```
 

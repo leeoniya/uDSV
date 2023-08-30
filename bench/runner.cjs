@@ -47,7 +47,7 @@ const DATA_SENSORS      = './bench/data/data-large.csv';
 const DATA_SENSORS_1HDR = './bench/data/data-large2.csv';
 const DATA_HOUSE_PRICES = './bench/data/HPI_master.csv';
 
-let dataPaths = [
+let synthData = [
   // './bench/data/test.csv',
 
   './bench/data/litmus_strings.csv',
@@ -56,12 +56,19 @@ let dataPaths = [
 
   './bench/data/csv42_flat_10k.csv',
   './bench/data/csv42_nested_10k.csv',
+];
 
+let realData = [
   DATA_EARTHQUAKES,
   DATA_ZIPCODES,
   DATA_SENSORS,
   DATA_SENSORS_1HDR,
   DATA_HOUSE_PRICES,
+];
+
+let dataPaths = [
+  ...synthData,
+  ...realData,
 ];
 
 let typedParsers = [
@@ -246,7 +253,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
       for (let parserPath of parserPaths) {
         await go(parserPath, dataPath, fileSize);
-        await sleep(10000);
+        await sleep(10_000);
       }
     }
   } catch (spawnErr) {
