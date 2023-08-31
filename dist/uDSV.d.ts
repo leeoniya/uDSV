@@ -2,11 +2,9 @@ type DeepReadonly<T> = {
 	readonly [P in keyof T]: DeepReadonly<T[P]>
 }
 
-export type UntypedRow = string[];
-
 export interface InferSchemaOpts {
 	/** should return an array whose length is how many header rows to skip, and should include an UntypedRow to use for col names */
-	header?: (rows: UntypedRow[]) => (UntypedRow | null)[]; // default: rows => [rows[0]]
+	header?: (rows: string[]) => (string[] | null)[]; // default: rows => [rows[0]]
 
 	/** column delimiter (null = infer, ',' = comma) */
 	col?:  string | null;  // null (infers from header in this order: [tab, pipe, semi, comma])
@@ -86,49 +84,45 @@ export interface Schema {
 }
 
 /** can return false to stop further parsing */
-export type OnDataFn = <T>(
+export type OnDataFn<T> = (
 	/** parsed rows or cols */
 	data: T[],
 	/** appender (for internal buffer) */
 	append: (data: T[]) => void
-) => void | false;
+) => void | false; // | T[];
 
-export type StringArrs = <T extends UntypedRow>(csvStr: string, onData?: OnDataFn<T>) => T[];  // tuple per row
+export type BaseParse<T> = (csvStr: string, onData?: OnDataFn<T>) => T[];
 
-export type TypedArrs  = <T extends []        >(csvStr: string, onData?: OnDataFn<T>) => T[];  // tuple per row
-
-export type TypedObjs  = <T extends {}        >(csvStr: string, onData?: OnDataFn<T>) => T[];  // object per row
-
-export type ParseFn = StringArrs | TypedArrs | TypedObjs | TypedDeep | TypedCols;
+type record = Record<string, unknown>;
 
 export interface Parser {
 	/** exposed schema */
 	readonly schema: DeepReadonly<Schema>;
 
 	/** parses to string tuples */
-	stringArrs: StringArrs;
+	stringArrs: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed tuples */
-	typedArrs:  TypedArrs;
+	typedArrs:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed objects */
-	typedObjs:  TypedObjs;
+	typedObjs:  <T extends record    = {}>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
 	/** parses to nested typed objects (using column names) */
-	typedDeep:  TypedObjs;
+	typedDeep:  <T extends record    = {}>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed columnar arrays */
-	typedCols:  TypedArrs;
+	typedCols:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
 	/**
 	 * starts or continues incremental parsing \
 	 * default parse = stringArrs, default onData = accumulator
 	 **/
-	chunk: <T>(csvStr: string, parse?: ParseFn<T>, onData?: OnDataFn<T>) => void | T[];
+	chunk: <T>(csvStr: string, parse?: BaseParse<T>, onData?: OnDataFn<T>) => T[]; // => ReturnType<OnDataFn<T>>
 
 	/** stops and resets incremental parsing */
 	end: <T>() => void | T[];
-};
+}
 
 /** guesses a schema from input */
 export function inferSchema(
@@ -136,10 +130,10 @@ export function inferSchema(
 	csvStr: string,
 
 	/** pre-defined / partial schema */
-	opts: InferSchemaOpts,
+	opts?: InferSchemaOpts,
 
 	/** analysis limit (default: 10) */
-	maxRows: number,
+	maxRows?: number,
 ): Schema;
 
 export function initParser(
@@ -147,5 +141,5 @@ export function initParser(
 	schema: Schema,
 
 	/** how many parsed items to accumulate for onData (default = 1e3) */
-	chunkSize: number,
+	chunkSize?: number,
 ): Parser;
