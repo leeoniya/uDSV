@@ -229,6 +229,21 @@ test('correctness using Papa as reference', (t) => {
     }
 });
 
+test('custom enclosure escape { esc: \'\\\' }', (t) => {
+    const csvStr = `a,b,c\n1,"2\\"",3`;
+
+    let schema = inferSchema(csvStr, { esc: '\\' });
+    schema.skip = 0;
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['a','b','c'],
+        ['1','2"','3'],
+    ]);
+});
+
 test('unquoted path { trim: true }', (t) => {
     const csvStr = ` a, b,c , d ,e \n1,2 , 3 , 4, 5 `;
 

@@ -545,31 +545,49 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 		if (inCol === 2) {
 			while (true) {
-				if (c === escEnclChar) {
-					if (pos + 1 > endPos) { // TODO: test with chunk ending in closing ", even at EOL but not EOF
-						pos = endPos + 1;
-						break;
-					}
-
-					let cNext = csvStr.charCodeAt(pos + 1);
-
-					if (cNext === colEnclChar) {
-						v += colEncl;
-						pos += 2;
-
-						if (pos > endPos) {
+				if (c === colEnclChar) {
+					if (colEnclChar === escEnclChar) {
+						if (pos + 1 > endPos) { // TODO: test with chunk ending in closing ", even at EOL but not EOF
 							pos = endPos + 1;
 							break;
 						}
 
-						c = csvStr.charCodeAt(pos);
+						let cNext = csvStr.charCodeAt(pos + 1);
+
+						if (cNext === colEnclChar) {
+							pos += 2;
+
+							// MACRO START
+							v += colEncl;
+							if (pos > endPos)
+								break;
+							c = csvStr.charCodeAt(pos);
+							// MACRO END
+						}
+						else {
+							inCol = 0;
+							pos += 1;
+							break;
+						}
 					}
 					else {
-						inCol = 0;
-						pos += 1;
-						// we have the next char, so can technically skip the redundant charCodeAt at top of loop, but tricky
-					//	c = cNext;
-						break;
+						let cPrev = csvStr.charCodeAt(pos - 1);
+
+						if (cPrev === escEnclChar) {
+							pos += 1;
+
+							// MACRO START
+							v += colEncl;
+							if (pos > endPos)
+								break;
+							c = csvStr.charCodeAt(pos);
+							// MACRO END
+						}
+						else {
+							inCol = 0;
+							pos += 1;
+							break;
+						}
 					}
 				}
 				else {
@@ -580,7 +598,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						break;
 					}
 
-					v += csvStr.slice(pos, pos2);
+					v += csvStr.slice(pos, colEnclChar === escEnclChar ? pos2 : pos2 - 1);
 					pos = pos2;
 					c = colEnclChar;
 				}
