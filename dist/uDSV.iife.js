@@ -57,7 +57,6 @@ var uDSV = (function (exports) {
 
 	function guessType(ci, rows) {
 		// row with a value to analyze
-		// trim()?
 		let row = rows.findLast(r =>
 			r[ci] !== ''     &&
 			r[ci] !== 'null' &&
@@ -85,7 +84,7 @@ var uDSV = (function (exports) {
 	function getValParseExpr(ci, col) {
 		let { type } = col;
 
-		let rv = `r[${ci}]`; // trim()?
+		let rv = `r[${ci}]`;
 
 		let parseExpr =
 			type    === T_DATE    ? `new Date(${rv})`                             :
@@ -157,7 +156,6 @@ var uDSV = (function (exports) {
 			}
 		}
 
-		// r.trim()?
 		let fnBody = `
 		let arr = Array(rows.length);
 
@@ -539,10 +537,9 @@ var uDSV = (function (exports) {
 					if (trim && c === spaceChar) {
 						while (c === spaceChar)
 							c = csvStr.charCodeAt(++pos);
-						continue;
 					}
-
-					inCol = 1;
+					else
+						inCol = 1;
 				}
 			}
 

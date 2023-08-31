@@ -56,7 +56,6 @@ const T_BOOLEAN = 'b';
 
 function guessType(ci, rows) {
 	// row with a value to analyze
-	// trim()?
 	let row = rows.findLast(r =>
 		r[ci] !== ''     &&
 		r[ci] !== 'null' &&
@@ -84,7 +83,7 @@ function guessType(ci, rows) {
 function getValParseExpr(ci, col) {
 	let { type } = col;
 
-	let rv = `r[${ci}]`; // trim()?
+	let rv = `r[${ci}]`;
 
 	let parseExpr =
 		type    === T_DATE    ? `new Date(${rv})`                             :
@@ -156,7 +155,6 @@ function genToTypedRows(cols, objs = false, deep = false) {
 		}
 	}
 
-	// r.trim()?
 	let fnBody = `
 		let arr = Array(rows.length);
 
@@ -538,10 +536,9 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				if (trim && c === spaceChar) {
 					while (c === spaceChar)
 						c = csvStr.charCodeAt(++pos);
-					continue;
 				}
-
-				inCol = 1;
+				else
+					inCol = 1;
 			}
 		}
 
