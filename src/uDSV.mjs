@@ -351,16 +351,13 @@ export function initParser(schema, chunkSize) {
 			streamParse ??= parse;
 			streamCb    ??= cb;
 
-			let out = null;
-
 			if (streamState === 1) {
-				out = streamParse(prevUnparsed + pendChunk, streamCb);
+				streamParse(prevUnparsed + pendChunk, streamCb);
 				streamChunkNum++;
 			}
 
 			pendChunk = csvStr;
 			streamState = 1;
-			return out;
 		},
 		end() {
 			streamState = 2;

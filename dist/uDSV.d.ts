@@ -99,8 +99,10 @@ export interface Parser {
 	/** exposed schema */
 	readonly schema: DeepReadonly<Schema>;
 
+	// readonly buffer:
+
 	/** parses to string tuples */
-	stringArrs: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	stringArrs: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[]; // ReturnType<OnDataFn<T>>
 
 	/** parses to typed tuples */
 	typedArrs:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
@@ -118,10 +120,10 @@ export interface Parser {
 	 * starts or continues incremental parsing \
 	 * default parse = stringArrs, default onData = accumulator
 	 **/
-	chunk: <T>(csvStr: string, parse?: BaseParse<T>, onData?: OnDataFn<T>) => T[]; // => ReturnType<OnDataFn<T>>
+	chunk: <T>(csvStr: string, parse?: BaseParse<T>, onData?: OnDataFn<T>) => void;
 
 	/** stops and resets incremental parsing */
-	end: <T>() => void | T[];
+	end: <T>() => T[];
 }
 
 /** guesses a schema from input */
