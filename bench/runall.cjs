@@ -113,6 +113,7 @@ let typedParsers = [
 let untypedParsers = [
   './non-streaming/untyped/uDSV.cjs',
   './non-streaming/untyped/PapaParse.cjs',
+  './non-streaming/untyped/ACsv.cjs',
   './non-streaming/untyped/d3-dsv.cjs',
   './non-streaming/untyped/but-csv.cjs',
   './non-streaming/untyped/csv-simple-parser.cjs',

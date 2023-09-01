@@ -448,7 +448,7 @@ Notes:
 
 - uDSV offers the simplicity of Option #1 with the performance of Option #3.
 - I could not find typing options for these parsers: `but-csv`, `@fast-csv/parse`, `jquery-csv`, `@gregoranders/csv`, `@stdlib/utils-dsv-base-parse`.
-- `node-csvtojson` provides typing only via [static column config](https://github.com/Keyang/node-csvtojson#column-parser), so it is excluded for not being generic.
+- `ACsv.js` and `node-csvtojson` provide typing only via [static column config](https://github.com/Keyang/node-csvtojson#column-parser), so they're excluded for not being generic.
 
 
 **USA ZIP Codes**
