@@ -303,34 +303,48 @@ _type,name,description,location.city,location.street,location.geo[0],location.ge
 item,Item 0,Item 0 description in text,Rotterdam,Main street,51.9280712,4.4207888,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
 `.trim();
 
-/*
 test('typed arrs', (t) => {
-    let rows = [];
-    let s = schema(csvStr);
-    parse(csvStr, s, (chunk, chunkNum) => {
-      rows.push(...s.toArrs(chunkNum === 0 ? chunk.slice(1) : chunk));
-    });
-    res(rows);
+    const csvStr = `a,b,c\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.typedArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        [1,2,3],
+        [4,5,6],
+    ]);
 });
 
 test('typed objs', (t) => {
-    let rows = [];
-    let _schema = schema(csvStr);
-    parse(csvStr, schema, (chunk, chunkNum) => {
-      rows.push(...schema.toObjs(chunkNum === 0 ? chunk.slice(1) : chunk));
-    });
-    res(rows);
+    const csvStr = `a,b,c\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.typedObjs(csvStr);
+
+    assert.deepEqual(rows, [
+        {a: 1, b: 2, c: 3},
+        {a: 4, b: 5, c: 6}
+    ]);
 });
 
 test('typed cols', (t) => {
-    let rows = [];
-    let _schema = schema(csvStr);
-    parse(csvStr, schema, (chunk, chunkNum) => {
-      rows.push(...schema.toObjs(chunkNum === 0 ? chunk.slice(1) : chunk));
-    });
-    res(rows);
+    const csvStr = `a,b,c\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let cols = parser.typedCols(csvStr);
+
+    assert.deepEqual(cols, [
+        [1,4],
+        [2,5],
+        [3,6],
+    ]);
 });
-*/
 
 test('typed objs (deep)', (t) => {
     let parser = initParser(inferSchema(deepObjs));
@@ -388,12 +402,118 @@ test('variable size chunks (incremental/streaming)', async (t) => {
     }
 });
 
+test('string/number/bool/date/json', (t) => {
+    const csvStr = `
+        "zip","lat","lng","city","state_id","state_name","zcta","parent_zcta","population","density","county_fips","county_name","county_weights","county_names_all","county_fips_all","imprecise","military","timezone","date"
+        "00601","18.18027","-66.75266","Adjuntas","PR","Puerto Rico","TRUE","","17126","102.6","72001","Adjuntas","{""72001"": 98.73, ""72141"": 1.27}","Adjuntas|Utuado","72001|72141","FALSE","FALSE","America/Puerto_Rico","2015-12-22T18:45:11.000Z"
+    `.trim().replace(/^\s+|\s+$/gm, '');
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.typedArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        [
+            601,
+            18.18027,
+            -66.75266,
+            'Adjuntas',
+            'PR',
+            'Puerto Rico',
+            true,
+            null,
+            17126,
+            102.6,
+            72001,
+            'Adjuntas',
+            {
+                '72001': 98.73,
+                '72141': 1.27
+            },
+            'Adjuntas|Utuado',
+            '72001|72141',
+            false,
+            false,
+            'America/Puerto_Rico',
+            new Date('2015-12-22T18:45:11.000Z'),
+        ]
+    ]);
+});
+
+test('header select', (t) => {
+    const csvStr = `a,b,c\nl,m,n\nx,y,z\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr, {
+        header: (rows) => [null, rows[1], null], // skip 3, use second
+    });
+    let parser = initParser(schema);
+
+    let objs = parser.typedObjs(csvStr);
+
+    assert.deepEqual(objs, [
+        {
+            l: 1,
+            m: 2,
+            n: 3
+        },
+        {
+            l: 4,
+            m: 5,
+            n: 6
+        }
+    ]);
+
+    let rows = parser.typedArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        [1,2,3],
+        [4,5,6],
+    ]);
+});
+
+test('tab separated values', (t) => {
+    const csvStr = `a\tb\tc\n1\t2\t3`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2','3'],
+    ]);
+});
+
+test('pipe separated values', (t) => {
+    const csvStr = `a|b|c\n1|2|3`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2','3'],
+    ]);
+});
+
+test('semi separated values', (t) => {
+    const csvStr = `a;b;c\n1;2;3`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2','3'],
+    ]);
+});
+
 // TODO:
-// tab and pipe delims
 // "", ", """ (at EOL)
-// also just ""
 // single line with no linebreak
 // empty lines?
-// trim?
 // single column
 // '\r\n'
