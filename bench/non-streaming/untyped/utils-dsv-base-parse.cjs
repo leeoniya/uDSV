@@ -1,5 +1,5 @@
 module.exports = {
-  name: '@stdlib/utils-dsv-base-parse',
+  name: 'utils-dsv-base-parse',
   repo: 'https://github.com/stdlib-js/utils-dsv-base-parse',
   load: async () => {
     let { default: Parser } = await import('@stdlib/utils-dsv-base-parse');

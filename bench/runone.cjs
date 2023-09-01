@@ -161,7 +161,7 @@ async function bench(csvStr, path, parse) {
       out.rss = rss;
     }
   } catch (e) {
-    out.error = `ERR: ${e.message}`;
+    out.error = `ERR: ${e.message.slice(0, 50 - 5)}`;
   } finally {
     console.log(JSON.stringify(out));
     parser.unload?.();
