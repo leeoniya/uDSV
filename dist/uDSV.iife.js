@@ -396,6 +396,12 @@ var uDSV = (function (exports) {
 		let rowDelimLen = rowDelim.length;
 		let colDelimLen = colDelim.length;
 
+		let colEnclChar  = colEncl.charCodeAt(0);
+		let escEnclChar  = escEncl.charCodeAt(0);
+		let rowDelimChar = rowDelim.charCodeAt(0);
+		let colDelimChar = colDelim.charCodeAt(0);
+		let spaceChar    = 32;
+
 		let numChunks = 0;
 
 		let pos = 0;
@@ -442,17 +448,24 @@ var uDSV = (function (exports) {
 					linePos = pos;
 				}
 				else {
-					let pos2 = csvStr.indexOf(colDelim, pos);
-
-					if (pos2 === -1) {
-						if (!withEOF)
-							break;
+					// empty line
+					if (colIdx === 0 && csvStr.charCodeAt(pos) === rowDelimChar) {
+						pos += rowDelimLen;
+						// TODO: callback here!
 					}
+					else {
+						let pos2 = csvStr.indexOf(colDelim, pos);
 
-					let s = csvStr.slice(pos, pos2);
-					row[colIdx] = trim ? s.trim() : s;
-					pos = pos2 + colDelimLen;
-					filledColIdx = colIdx++;
+						if (pos2 === -1) {
+							if (!withEOF)
+								break;
+						}
+
+						let s = csvStr.slice(pos, pos2);
+						row[colIdx] = trim ? s.trim() : s;
+						pos = pos2 + colDelimLen;
+						filledColIdx = colIdx++;
+					}
 				}
 			}
 
@@ -461,12 +474,6 @@ var uDSV = (function (exports) {
 
 			return;
 		}
-
-		let colEnclChar  = colEncl.charCodeAt(0);
-		let escEnclChar  = escEncl.charCodeAt(0);
-		let rowDelimChar = rowDelim.charCodeAt(0);
-		let colDelimChar = colDelim.charCodeAt(0);
-		let spaceChar    = 32;
 
 		// should this be * to handle ,, ?
 		const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
@@ -494,6 +501,12 @@ var uDSV = (function (exports) {
 				}
 				else if (c === colDelimChar || c === rowDelimChar) {
 					// PUSH MACRO START
+					if (c === rowDelimChar && colIdx === 0) {
+						pos += rowDelimLen;
+						// TODO: callback here!
+						continue;
+					}
+
 					row[colIdx] = v;
 					filledColIdx = colIdx;
 					colIdx += 1;
@@ -604,6 +617,12 @@ var uDSV = (function (exports) {
 			else if (inCol === 1) {
 				if (c === colDelimChar || c === rowDelimChar) {
 					// PUSH MACRO START
+					if (c === rowDelimChar && colIdx === 0) {
+						pos += rowDelimLen;
+						// TODO: callback here!
+						continue;
+					}
+
 					row[colIdx] = v;
 					filledColIdx = colIdx;
 					colIdx += 1;

@@ -386,6 +386,12 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	let rowDelimLen = rowDelim.length;
 	let colDelimLen = colDelim.length;
 
+	let colEnclChar  = colEncl.charCodeAt(0);
+	let escEnclChar  = escEncl.charCodeAt(0);
+	let rowDelimChar = rowDelim.charCodeAt(0);
+	let colDelimChar = colDelim.charCodeAt(0);
+	let spaceChar    = 32;
+
 	let numChunks = 0;
 
 	let pos = 0;
@@ -432,17 +438,24 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				linePos = pos;
 			}
 			else {
-				let pos2 = csvStr.indexOf(colDelim, pos);
-
-				if (pos2 === -1) {
-					if (!withEOF)
-						break;
+				// empty line
+				if (colIdx === 0 && csvStr.charCodeAt(pos) === rowDelimChar) {
+					pos += rowDelimLen;
+					// TODO: callback here!
 				}
+				else {
+					let pos2 = csvStr.indexOf(colDelim, pos);
 
-				let s = csvStr.slice(pos, pos2);
-				row[colIdx] = trim ? s.trim() : s;
-				pos = pos2 + colDelimLen;
-				filledColIdx = colIdx++;
+					if (pos2 === -1) {
+						if (!withEOF)
+							break;
+					}
+
+					let s = csvStr.slice(pos, pos2);
+					row[colIdx] = trim ? s.trim() : s;
+					pos = pos2 + colDelimLen;
+					filledColIdx = colIdx++;
+				}
 			}
 		}
 
@@ -451,12 +464,6 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 		return;
 	}
-
-	let colEnclChar  = colEncl.charCodeAt(0);
-	let escEnclChar  = escEncl.charCodeAt(0);
-	let rowDelimChar = rowDelim.charCodeAt(0);
-	let colDelimChar = colDelim.charCodeAt(0);
-	let spaceChar    = 32;
 
 	// should this be * to handle ,, ?
 	const takeToCommaOrEOL = _probe ? new RegExp(`[^${colDelim}${rowDelim}]+`, 'my') : null;
@@ -484,6 +491,12 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 			}
 			else if (c === colDelimChar || c === rowDelimChar) {
 				// PUSH MACRO START
+				if (c === rowDelimChar && colIdx === 0) {
+					pos += rowDelimLen;
+					// TODO: callback here!
+					continue;
+				}
+
 				row[colIdx] = v;
 				filledColIdx = colIdx;
 				colIdx += 1;
@@ -594,6 +607,12 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		else if (inCol === 1) {
 			if (c === colDelimChar || c === rowDelimChar) {
 				// PUSH MACRO START
+				if (c === rowDelimChar && colIdx === 0) {
+					pos += rowDelimLen;
+					// TODO: callback here!
+					continue;
+				}
+
 				row[colIdx] = v;
 				filledColIdx = colIdx;
 				colIdx += 1;

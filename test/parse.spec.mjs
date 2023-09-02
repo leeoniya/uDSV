@@ -215,6 +215,32 @@ const airports = `
 
 // https://github.com/darionco/dekkai#benchmark
 
+test('quoted path, omit empty lines', (t) => {
+    const csvStr = `"a","b","c"\n\n\n"1","2","3"`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2','3'],
+    ]);
+});
+
+test('unquoted path, omit empty lines', (t) => {
+    const csvStr = `a,b,c\n\n\n1,2,3`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2','3'],
+    ]);
+});
+
 test('correctness using Papa as reference', (t) => {
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         let ref = Papa.parse(csvStr).data;

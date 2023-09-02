@@ -20,7 +20,7 @@ What does μDSV pack into 5KB?
 - Incremental or full parsing, with optional accumulation
 - Auto-detection and customization of delimiters (rows, columns, quotes, escapes)
 - Multi-row header skipping and column renaming
-- Whitespace trimming of values
+- Whitespace trimming of values, skipping empty lines
 - Schema inference and value typing: `string`, `number`, `boolean`, `date`, `json`
 - Defined handling of `''`, `'null'`, `'NaN'`
 - Multiple outputs: arrays (tuples), objects, nested objects, columnar arrays
@@ -32,11 +32,13 @@ Of course, _most_ of these are table stakes for CSV parsers :)
 
 Is it Lightning Fast™ or Blazing Fast™?
 
-No, those are too slow! μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0).
+No, those are too slow! μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0);
+it's faster than the parsers you recognize and faster than those you've never heard of.
 
-It's impossible to communicate the necessary nuance in a single statement, but on my Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, I see 1x-5x single threaded performance improvement relative to [Papa Parse](https://www.papaparse.com/). I use Papa Parse as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
+On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
+Papa Parse is used as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
 
-For way too many synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
+For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -197,4 +199,5 @@ parser.end();
 ---
 ### TODO?
 
-- omit (and emit) empty rows and #comment rows
+- handle #comment rows
+- emit empty-row and #comment events?
