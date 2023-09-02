@@ -17,11 +17,12 @@ The aim of this project is to handle the 99.5% use-case without adding complexit
 What does μDSV pack into 5KB?
 
 - [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180) compliant
-- Customizable delimiters for rows and columns, with auto-detection
-- Header skipping and column renaming
+- Incremental or full parsing, with optional accumulation
+- Auto-detection and customization of delimiters (rows, columns, quotes, escapes)
+- Multi-row header skipping and column renaming
+- Whitespace trimming of values
 - Schema inference and value typing: `string`, `number`, `boolean`, `date`, `json`
 - Defined handling of `''`, `'null'`, `'NaN'`
-- Incremental or full parsing, with optional accumulation
 - Multiple outputs: arrays (tuples), objects, nested objects, columnar arrays
 
 Of course, _most_ of these are table stakes for CSV parsers :)
@@ -33,10 +34,39 @@ Is it Lightning Fast™ or Blazing Fast™?
 
 No, those are too slow! μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0).
 
-It's impossible to communicate the necessary nuance in a single statement, but on my Ryzen 7 ThinkPad with Linux v6.4.11/NodeJS v20.5.1, I see 1x-5x single threaded performance improvement relative to [Papa Parse](https://www.papaparse.com/). I use Papa Parse as a reference not because it's the fastest (spoiler: it isn't), but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
+It's impossible to communicate the necessary nuance in a single statement, but on my Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, I see 1x-5x single threaded performance improvement relative to [Papa Parse](https://www.papaparse.com/). I use Papa Parse as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
 
-μDSV outpaced 20+ tested parsers across a diverse range real-world datasets and parsing options.
-For the full benchmark writeup + source, parsing parity commentary, and Bun.js goodness, head over to [/bench](/bench)...and don't forget your coffee!
+For way too many synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+│ uszips.csv (6 MB, 18 cols x 34K rows)                                                         │
+├────────────────────────┬────────┬─────────────────────────────────────────────────────────────┤
+│ Name                   │ Rows/s │ Throughput (MiB/s)                                          │
+├────────────────────────┼────────┼─────────────────────────────────────────────────────────────┤
+│ uDSV                   │ 754K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 135 │
+│ achilles-csv-parser    │ 465K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 83                       │
+│ d3-dsv                 │ 422K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 75.5                        │
+│ csv-rex                │ 350K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░ 62.5                             │
+│ PapaParse              │ 306K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 54.7                                │
+│ csv42                  │ 289K   │ ░░░░░░░░░░░░░░░░░░░░░░ 51.6                                 │
+│ csv-js                 │ 289K   │ ░░░░░░░░░░░░░░░░░░░░░░ 51.5                                 │
+│ CSVtoJSON              │ 246K   │ ░░░░░░░░░░░░░░░░░░ 43.9                                     │
+│ comma-separated-values │ 245K   │ ░░░░░░░░░░░░░░░░░░ 43.8                                     │
+│ SheetJS                │ 238K   │ ░░░░░░░░░░░░░░░░░░ 42.6                                     │
+│ csv-simple-parser      │ 238K   │ ░░░░░░░░░░░░░░░░░░ 42.6                                     │
+│ csv-parser (neat-csv)  │ 226K   │ ░░░░░░░░░░░░░░░░░ 40.3                                      │
+│ ACsv                   │ 212K   │ ░░░░░░░░░░░░░░░░ 37.9                                       │
+│ @vanillaes/csv         │ 195K   │ ░░░░░░░░░░░░░░░ 34.8                                        │
+│ node-csvtojson         │ 162K   │ ░░░░░░░░░░░░ 28.9                                           │
+│ csv-parse/sync         │ 125K   │ ░░░░░░░░░░ 22.4                                             │
+│ @fast-csv/parse        │ 78.2K  │ ░░░░░░ 14                                                   │
+│ jquery-csv             │ 55K    │ ░░░░░ 9.83                                                  │
+│ but-csv                │ ---    │ ERR: Wrong row count, expected: 33790, actual: 1.           │
+│ @gregoranders/csv      │ ---    │ ERR: Invalid CSV at 1:109                                   │
+│ utils-dsv-base-parse   │ ---    │ ERR: unexpected error. Encountered an invalid reco          │
+└────────────────────────┴────────┴─────────────────────────────────────────────────────────────┘
+```
 
 ---
 ### Installation

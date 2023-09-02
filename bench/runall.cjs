@@ -216,8 +216,8 @@ async function go(parserPath, dataPath, dataSize) {
       }
     });
 
-    const blocksMBPS = 50;
-    const blocksRSS = 30;
+    const blocksMBPS = 55;
+    const blocksRSS = 25;
 
     let { cols, rows } = results.find(r => r.rows != null) ?? { cols: 0, rows: 0 };
 
@@ -230,10 +230,10 @@ async function go(parserPath, dataPath, dataSize) {
           "Name":   name,
           // "Ops/s":  '---',
           "Rows/s": '---',
-          "Throughput (MiB/s)": '---',
+          "Throughput (MiB/s)": error,
           [rssHeader]: '---',
           "Types": '---',
-          "Sample": error,
+          "Sample": '---',
         };
       }
 
