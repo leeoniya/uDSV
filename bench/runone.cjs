@@ -117,7 +117,7 @@ async function bench(csvStr, path, parse) {
       }
     } else {
       numRows = result.length;
-      numCols = Object.keys(result[0]).length;
+      numCols = Object.keys(result[0] ?? []).length;
       // limit to 100c x 10r
       sample = result.slice(0, 10).map(r => {
         if (Array.isArray(r))
@@ -147,9 +147,9 @@ async function bench(csvStr, path, parse) {
 
     // TODO: remove tolerance
     if (numRows < expected.length - 2 || numRows > expected.length)
-      out.error = `ERR: Wrong row count, expected: ${expected.length}, actual: ${numRows}.`;
+      out.error = `Wrong row count! Expected: ${expected.length}, Actual: ${numRows}`;
     else if (numCols !== Object.keys(expected[0]).length)
-      out.error = `ERR: Wrong col count, expected: ${Object.keys(expected[0]).length}, actual: ${numCols}.`;
+      out.error = `Wrong col count! Expected: ${Object.keys(expected[0]).length}, Actual: ${numCols}`;
     else {
       const { gmean, rss } = await bench(csvStr, dataPath, parse);
       out.rows = numRows;
@@ -161,7 +161,7 @@ async function bench(csvStr, path, parse) {
       out.rss = rss;
     }
   } catch (e) {
-    out.error = `ERR: ${e.message.slice(0, 50 - 5)}`;
+    out.error = e.message;
   } finally {
     console.log(JSON.stringify(out));
     parser.unload?.();

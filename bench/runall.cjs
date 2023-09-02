@@ -72,7 +72,6 @@ let synthData = [
 let realData = [
   // DATA_EARTHQUAKES,
   DATA_ZIPCODES,
-  // DATA_SENSORS,
   // DATA_SENSORS_1HDR,
   // DATA_HOUSE_PRICES,
 ];
@@ -217,7 +216,7 @@ async function go(parserPath, dataPath, dataSize) {
     });
 
     const blocksMBPS = 55;
-    const blocksRSS = 25;
+    const blocksRSS = 27;
 
     let { cols, rows } = results.find(r => r.rows != null) ?? { cols: 0, rows: 0 };
 
@@ -230,7 +229,7 @@ async function go(parserPath, dataPath, dataSize) {
           "Name":   name,
           // "Ops/s":  '---',
           "Rows/s": '---',
-          "Throughput (MiB/s)": error,
+          "Throughput (MiB/s)": error.slice(0, 59),
           [rssHeader]: '---',
           "Types": '---',
           "Sample": '---',
