@@ -57,8 +57,16 @@ let synthData = [
   './bench/data/litmus_ints.csv',
   './bench/data/litmus_quoted.csv',
 
-  './bench/data/csv42_flat_10k.csv',
-  './bench/data/csv42_nested_10k.csv',
+  // https://github.com/josdejong/csv42/tree/main/benchmark
+  // './bench/data/csv42_flat_10k.csv',
+  // './bench/data/csv42_nested_10k.csv',
+
+  // https://github.com/willfarrell/csv-benchmarks
+  // './bench/data/10x10000_slim.csv',
+  // './bench/data/10x100000_slim.csv',
+  // './bench/data/100x100000_slim.csv',
+  // './bench/data/10x100000_quoted.csv',
+  // './bench/data/100x100000_quoted.csv',
 ];
 
 let realData = [
@@ -85,6 +93,7 @@ let typedParsers = [
   './non-streaming/typed/d3-dsv-arrs.cjs',
   // './non-streaming/typed/d3-dsv-objs.cjs',
 
+  './non-streaming/typed/csv-rex.cjs',
   './non-streaming/typed/comma-separated-values.cjs',
   './non-streaming/typed/csv42.cjs',
   './non-streaming/typed/achilles-csv-parser.cjs',
@@ -115,6 +124,7 @@ let untypedParsers = [
   './non-streaming/untyped/PapaParse.cjs',
   './non-streaming/untyped/ACsv.cjs',
   './non-streaming/untyped/d3-dsv.cjs',
+  './non-streaming/untyped/csv-rex.cjs',
   './non-streaming/untyped/but-csv.cjs',
   './non-streaming/untyped/csv-simple-parser.cjs',
   './non-streaming/untyped/node-csvtojson.cjs',
@@ -141,6 +151,7 @@ let streamingParsers = [
   './streaming/untyped/uDSV.cjs',
   './streaming/untyped/PapaParse.cjs',
   './streaming/untyped/node-csvtojson.cjs',
+  './streaming/untyped/csv-rex.cjs',
   './streaming/untyped/csv-parser.cjs',
   './streaming/untyped/ya-csv.cjs',
   './streaming/untyped/dekkai.cjs',
@@ -148,8 +159,8 @@ let streamingParsers = [
 ];
 
 let parserPaths = [
-  // ...untypedParsers,
-  ...typedParsers,
+  ...untypedParsers,
+  // ...typedParsers,
   // ...streamingParsers,
 ];
 

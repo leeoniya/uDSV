@@ -60,7 +60,7 @@ fs.writeFileSync(__dirname + '/data/litmus_quoted.csv', out.join('\n'));
 
 
 /*
-const fs = require('fs');
+// https://github.com/josdejong/csv42/tree/main/benchmark
 
 let len = 10_000;
 
@@ -87,4 +87,57 @@ let len = 10_000;
 
   fs.writeFileSync('./csv42_nested_10k.csv', testHuge.join("\n"));
 }
+*/
+
+/*
+// https://github.com/LeanyLabs/csv-parsers-benchmarks
+// https://github.com/willfarrell/csv-benchmarks
+
+let files = [
+  {
+    columns: 10,
+    rows: 10_000,
+    cycles: 20,
+  },
+  {
+    columns: 100,
+    rows: 10_000,
+    cycles: 10,
+  },
+  {
+    columns: 10,
+    rows: 100_000,
+    cycles: 10,
+  },
+  {
+    columns: 100,
+    rows: 100_000,
+    cycles: 5,
+  },
+  {
+    columns: 10,
+    rows: 1_000_000,
+    cycles: 5,
+  },
+];
+
+function gen(quotes) {
+  const wrapper = quotes ? '"' : ''
+  const delimiter = quotes ? '","' : ','
+
+  files.forEach(({columns, rows}) => {
+    let buf = '';
+
+    buf += wrapper + Array.from({ length: columns }, (_, x) => `col${x}`).join(delimiter) + wrapper + '\r\n';
+
+    for (let y = 0; y < rows; y++) {
+      buf += wrapper + Array.from({ length: columns }, (_, x) => `${x}x${y}`).join(delimiter) + wrapper + '\r\n';
+    }
+
+    fs.writeFileSync(`./bench/data/${columns}x${rows}_${quotes ? 'quoted' : 'slim'}.csv`, buf);
+  });
+}
+
+gen(true);
+gen(false);
 */

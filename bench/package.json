@@ -12,6 +12,7 @@
     "yargs-parser": "^21.1.1"
   },
   "devDependencies": {
+    "@datastream/csv": "^0.0.35",
     "@fast-csv/parse": "^4.3.6",
     "@gregoranders/csv": "^0.0.12",
     "@lukaswagner/csv-parser": "^0.3.0",
@@ -25,6 +26,7 @@
     "csv-parse": "^5.5.0",
     "csv-parser": "^3.0.0",
     "csv-parser-2": "^1.0.1",
+    "csv-rex": "^0.7.0",
     "csv-simple-parser": "^1.0.1",
     "csv42": "^4.0.0",
     "csvtojson": "^2.0.10",
