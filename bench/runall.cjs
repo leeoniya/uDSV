@@ -1,7 +1,7 @@
 // node ./bench/runall.cjs
 // node --max-old-space-size=1536 ./bench/runall.cjs
 
-const CYCLE_DELAY = 5_000;
+const CYCLE_DELAY = 10_000;
 
 const baselineRSS = process.memoryUsage().rss;
 
@@ -121,6 +121,8 @@ let typedParsers = [
 ];
 
 let untypedParsers = [
+  // './non-streaming/untyped/string-split.cjs',
+
   './non-streaming/untyped/uDSV.cjs',
   './non-streaming/untyped/PapaParse.cjs',
   './non-streaming/untyped/ACsv.cjs',
