@@ -6,6 +6,7 @@ const argv = require('yargs-parser')(process.argv.slice(2));
 
 const dataPath = argv.data;
 const parserMod = argv.parser;
+const verify = !!(argv.verify ?? true);
 
 const fs = require('fs');
 
@@ -13,7 +14,7 @@ const Papa = require('papaparse'); // for output validation
 
 const csvStr = fs.readFileSync(dataPath, 'utf8'); // only if non stream mode?
 
-const expected = Papa.parse(csvStr).data;
+const expected = verify ? Papa.parse(csvStr).data : [];
 
 const parser = require(parserMod);
 
@@ -146,9 +147,9 @@ async function bench(csvStr, path, parse) {
     }
 
     // TODO: remove tolerance
-    if (numRows < expected.length - 2 || numRows > expected.length)
+    if (verify && (numRows < expected.length - 2 || numRows > expected.length))
       out.error = `Wrong row count! Expected: ${expected.length}, Actual: ${numRows}`;
-    else if (numCols !== Object.keys(expected[0]).length)
+    else if (verify && (numCols !== Object.keys(expected[0]).length))
       out.error = `Wrong col count! Expected: ${Object.keys(expected[0]).length}, Actual: ${numCols}`;
     else {
       const { gmean, rss } = await bench(csvStr, dataPath, parse);

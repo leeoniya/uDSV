@@ -49,6 +49,7 @@ const DATA_ZIPCODES     = './bench/data/uszips.csv';
 const DATA_SENSORS      = './bench/data/data-large.csv';
 const DATA_SENSORS_1HDR = './bench/data/data-large2.csv';
 const DATA_HOUSE_PRICES = './bench/data/HPI_master.csv';
+const DATA_AIRPORTS2    = './bench/data/Airports2.csv';
 
 let synthData = [
   // './bench/data/test.csv',
@@ -70,10 +71,11 @@ let synthData = [
 ];
 
 let realData = [
-  // DATA_EARTHQUAKES,
-  DATA_ZIPCODES,
   // DATA_SENSORS_1HDR,
+  DATA_ZIPCODES,
   // DATA_HOUSE_PRICES,
+  // DATA_EARTHQUAKES,
+  // DATA_AIRPORTS2,
 ];
 
 let dataPaths = [
@@ -147,14 +149,19 @@ let untypedParsers = [
 ];
 
 let streamingParsers = [
-  './streaming/untyped/uDSV.cjs',
-  './streaming/untyped/PapaParse.cjs',
-  './streaming/untyped/node-csvtojson.cjs',
-  './streaming/untyped/csv-rex.cjs',
-  './streaming/untyped/csv-parser.cjs',
-  './streaming/untyped/ya-csv.cjs',
-  './streaming/untyped/dekkai.cjs',
-  './streaming/untyped/utils-dsv-base-parse.cjs',
+  './streaming/untyped/retained/uDSV.cjs',
+  './streaming/untyped/retained/PapaParse.cjs',
+  './streaming/untyped/retained/node-csvtojson.cjs',
+  './streaming/untyped/retained/csv-rex.cjs',
+  './streaming/untyped/retained/csv-parser.cjs',
+  './streaming/untyped/retained/ya-csv.cjs',
+  './streaming/untyped/retained/dekkai.cjs',
+  './streaming/untyped/retained/utils-dsv-base-parse.cjs',
+
+  // only use with litmus_ints.csv or Ariports2.csv numeric dataset, since these sum the 6th column
+  // './streaming/untyped/non-retained/uDSV.cjs',
+  // './streaming/untyped/non-retained/PapaParse.cjs',
+  // './streaming/untyped/non-retained/dekkai.cjs',
 ];
 
 let parserPaths = [
@@ -172,11 +179,14 @@ async function go(parserPath, dataPath, dataSize) {
 
   let dataSizeMiB = dataSize / 1024 / 1024;
 
+  let verify = parserPath.includes('non-retained') ? 0 : 1;
+
   let result = spawnSync(bin, cmd.concat([
     // `--max-old-space-size=8192`,
     './bench/runone.cjs',
     `--data=${dataPath}`,
     `--parser=${parserPath}`,
+    `--verify=${verify}`
   ]));
 
   if (result.status !== 0)

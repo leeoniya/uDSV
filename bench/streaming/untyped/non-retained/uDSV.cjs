@@ -1,25 +1,32 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'uDSV (file)', // fs.createReadStream
+  name: 'uDSV (file, sum)', // fs.createReadStream
   repo: 'https://github.com/leeoniya/uDSV',
   load: async () => {
-    const { inferSchema, initParser } = await import('../../../dist/uDSV.cjs.js');
+    const { inferSchema, initParser } = await import('../../../../dist/uDSV.cjs.js');
 
     return (csvStr, path) => new Promise(res => {
       const readableStream = fs.createReadStream(path);
 
       let p = null;
+      let sum = 0;
+
+      let reducer = (rows) => {
+        for (let i = 0; i < rows.length; i++) {
+          sum += +rows[i][6];
+        }
+      };
 
       readableStream.on('data', (chunk) => {
         let strChunk = chunk.toString();
         p ??= initParser(inferSchema(strChunk, { encl: '"' }));
-        p.chunk(strChunk, p.stringArrs);
+        p.chunk(strChunk, p.stringArrs, reducer);
       });
 
       readableStream.on('end', () => {
-        let rows = p.end();
-        res(rows);
+        p.end();
+        res([[sum],[sum]]);
       });
     });
   },
