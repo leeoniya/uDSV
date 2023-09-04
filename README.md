@@ -5,7 +5,7 @@ A [faster](#performance) CSV parser in [5KB (min)](https://github.com/leeoniya/u
 ---
 ### Introduction
 
-μDSV is a fast JS library for parsing well-formed CSV strings, either from memory or incrementally from disk or network.
+uDSV is a fast JS library for parsing well-formed CSV strings, either from memory or incrementally from disk or network.
 It is mostly [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180) compliant, with support for quoted values containing commas, escaped quotes, and line breaks¹.
 The aim of this project is to handle the 99.5% use-case without adding complexity and performance trade-offs to support the remaining 0.5%.
 
@@ -19,10 +19,10 @@ What does μDSV pack into 5KB?
 - [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180) compliant
 - Incremental or full parsing, with optional accumulation
 - Auto-detection and customization of delimiters (rows, columns, quotes, escapes)
-- Multi-row header skipping and column renaming
-- Whitespace trimming of values, skipping empty lines
 - Schema inference and value typing: `string`, `number`, `boolean`, `date`, `json`
 - Defined handling of `''`, `'null'`, `'NaN'`
+- Whitespace trimming of values & skipping empty lines
+- Multi-row header skipping and column renaming
 - Multiple outputs: arrays (tuples), objects, nested objects, columnar arrays
 
 Of course, _most_ of these are table stakes for CSV parsers :)
@@ -37,6 +37,10 @@ it's faster than the parsers you recognize and faster than those you've never he
 
 On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
 Papa Parse is used as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
+
+Most CSV parsers have one happy path for high performance -- one that's typically without quoted values, without value typing, and only with default settings and output format.
+Once you're off that happy path, you can mostly throw their self-promoting benchmarks in the trash.
+In contrast, uDSV remains fast through all datasets and any options.
 
 For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
 
@@ -74,6 +78,21 @@ For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/b
 
 ---
 ### Installation
+
+```
+npm i udsv
+```
+
+or
+
+```
+<script src="./dist/uDSV.iife.min.js"></script>
+```
+
+---
+### API
+
+A 150 LoC [uDSV.d.ts](https://github.com/leeoniya/uDSV/blob/main/dist/uDSV.d.ts) TypeScript def.
 
 ---
 ### Basic Usage
