@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports =   {
-  name: 'dekkai (file, sum)',
+  name: 'dekkai (stream, sum)',
   repo: 'https://github.com/darionco/dekkai',
   load: async () => {
     const dekkai = require('dekkai/dist/umd/dekkai');

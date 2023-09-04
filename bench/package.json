@@ -34,6 +34,7 @@
     "dekkai": "^0.3.6",
     "flat": "^5.0.2",
     "jquery-csv": "^1.0.21",
+    "json-2-csv": "^4.1.0",
     "neat-csv": "^7.0.0",
     "papaparse": "^5.4.1",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz",

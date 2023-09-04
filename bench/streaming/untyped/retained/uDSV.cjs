@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'uDSV (file)', // fs.createReadStream
+  name: 'uDSV (stream)', // fs.createReadStream
   repo: 'https://github.com/leeoniya/uDSV',
   load: async () => {
     const { inferSchema, initParser } = await import('../../../../dist/uDSV.cjs.js');

@@ -12,9 +12,11 @@ const fs = require('fs');
 
 const Papa = require('papaparse'); // for output validation
 
-const csvStr = fs.readFileSync(dataPath, 'utf8'); // only if non stream mode?
+const csvStr = verify ? fs.readFileSync(dataPath, 'utf8') : ''; // only if non stream mode?
 
 const expected = verify ? Papa.parse(csvStr).data : [];
+
+const baselineRSS = process.memoryUsage().rss;
 
 const parser = require(parserMod);
 
@@ -89,6 +91,7 @@ async function bench(csvStr, path, parse) {
     sample: null,
     types: null,
     rss: null,
+    rssBase: null,
   };
 
   try {
@@ -105,45 +108,64 @@ async function bench(csvStr, path, parse) {
     let types;
 
     if (result._isCols) {
-      numRows = Object.keys(result[0]).length;
-      numCols = result.length;
-      sample = result.map(c => c.slice(0, 10));
+      let countRows = parser.countRows ?? (result => Object.keys(result[0] ?? []).length);
+      let countCols = parser.countCols ?? (result => result.length);
+      let getSample = parser.getSample ?? (result.map(c => c.slice(0, 10)));
+      let getTypes  = parser.getTypes  ?? (result => {
+        types = new Set();
 
-      types = new Set();
-
-      for (let c of result) {
-        for (let v of c.slice(1)) {
-          addType(types, v);
-        }
-      }
-    } else {
-      numRows = result.length;
-      numCols = Object.keys(result[0] ?? []).length;
-      // limit to 100c x 10r
-      sample = result.slice(0, 10).map(r => {
-        if (Array.isArray(r))
-          return r.slice(0, 100);
-        else {
-          let o = {};
-
-          let i = 0;
-          for (let k in r) {
-            o[k] = r[k];
-            if (++i == 100)
-              break;
+        for (let c of result) {
+          for (let v of c.slice(1)) {
+            addType(types, v);
           }
-
-          return o;
         }
+
+        return types;
       });
 
-      types = new Set();
+      numRows = countRows(result);
+      numCols = countCols(result);
+      sample  = getSample(result);
+      types   = getTypes(result);
+    }
+    else {
+      let countRows = parser.countRows ?? (result => result.length);
+      let countCols = parser.countCols ?? (result => Object.keys(result[0] ?? []).length);
+      let getSample = parser.getSample ?? (result => (
+        // limit to 100c x 10r
+        result.slice(0, 10).map(r => {
+          if (Array.isArray(r))
+            return r.slice(0, 100);
+          else {
+            let o = {};
 
-      for (let r of sample.slice(1)) {
-        for (let v of Object.values(r)) {
-          addType(types, v);
+            let i = 0;
+            for (let k in r) {
+              o[k] = r[k];
+              if (++i == 100)
+                break;
+            }
+
+            return o;
+          }
         }
-      }
+      )));
+      let getTypes = parser.getTypes  ?? (result => {
+        types = new Set();
+
+        for (let r of sample.slice(1)) {
+          for (let v of Object.values(r)) {
+            addType(types, v);
+          }
+        }
+
+        return types;
+      });
+
+      numRows = countRows(result);
+      numCols = countCols(result);
+      sample  = getSample(result);
+      types   = getTypes(result);
     }
 
     // TODO: remove tolerance
@@ -160,6 +182,7 @@ async function bench(csvStr, path, parse) {
       out.gmean = gmean;
       out.types = [...types].sort();
       out.rss = rss;
+      out.rssBase = baselineRSS;
     }
   } catch (e) {
     out.error = e.message;

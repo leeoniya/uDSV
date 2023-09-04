@@ -1,30 +1,28 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'dekkai (file)',
+  name: 'dekkai (stream)',
   repo: 'https://github.com/darionco/dekkai',
   load: async () => {
     const dekkai = require('dekkai/dist/umd/dekkai');
 
     return (csvStr, path) => new Promise(res => {
-      dekkai.init(1).then(() => {
+      dekkai.init(1).then(async () => {
         const file = fs.openSync(path);
 
-        dekkai.tableFromLocalFile(file).then(table => {
-          const rows = [];
+        const rows = [];
 
-          rows.push(table.mHeader.map(h => h.name));
+        // rows.push(table.mHeader.map(h => h.name));
 
-          table.forEach(row => {
-            let rowArr = [];
-            row.forEach(val => {
-              rowArr.push(val);
-            });
-            rows.push(rowArr);
-          }).then(() => {
-            res(rows);
+        await dekkai.iterateLocalFile(file, (row, index) => {
+          let rowArr = [];
+          row.forEach(val => {
+            rowArr.push(val);
           });
+          rows.push(rowArr);
         });
+
+        res(rows);
       });
     });
   },

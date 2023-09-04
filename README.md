@@ -47,26 +47,28 @@ For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/b
 │ Name                   │ Rows/s │ Throughput (MiB/s)                                          │
 ├────────────────────────┼────────┼─────────────────────────────────────────────────────────────┤
 │ uDSV                   │ 754K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 135 │
-│ achilles-csv-parser    │ 465K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 83                       │
-│ d3-dsv                 │ 422K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 75.5                        │
-│ csv-rex                │ 350K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░ 62.5                             │
-│ PapaParse              │ 306K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 54.7                                │
-│ csv42                  │ 289K   │ ░░░░░░░░░░░░░░░░░░░░░░ 51.6                                 │
-│ csv-js                 │ 289K   │ ░░░░░░░░░░░░░░░░░░░░░░ 51.5                                 │
-│ CSVtoJSON              │ 246K   │ ░░░░░░░░░░░░░░░░░░ 43.9                                     │
-│ comma-separated-values │ 245K   │ ░░░░░░░░░░░░░░░░░░ 43.8                                     │
-│ SheetJS                │ 238K   │ ░░░░░░░░░░░░░░░░░░ 42.6                                     │
-│ csv-simple-parser      │ 238K   │ ░░░░░░░░░░░░░░░░░░ 42.6                                     │
-│ csv-parser (neat-csv)  │ 226K   │ ░░░░░░░░░░░░░░░░░ 40.3                                      │
-│ ACsv                   │ 212K   │ ░░░░░░░░░░░░░░░░ 37.9                                       │
-│ @vanillaes/csv         │ 195K   │ ░░░░░░░░░░░░░░░ 34.8                                        │
-│ node-csvtojson         │ 162K   │ ░░░░░░░░░░░░ 28.9                                           │
-│ csv-parse/sync         │ 125K   │ ░░░░░░░░░░ 22.4                                             │
-│ @fast-csv/parse        │ 78.2K  │ ░░░░░░ 14                                                   │
-│ jquery-csv             │ 55K    │ ░░░░░ 9.83                                                  │
-│ but-csv                │ ---    │ ERR: Wrong row count, expected: 33790, actual: 1.           │
-│ @gregoranders/csv      │ ---    │ ERR: Invalid CSV at 1:109                                   │
-│ utils-dsv-base-parse   │ ---    │ ERR: unexpected error. Encountered an invalid reco          │
+│ achilles-csv-parser    │ 474K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 84.7                    │
+│ d3-dsv                 │ 433K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 77.3                       │
+│ csv-rex                │ 361K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░ 64.4                            │
+│ PapaParse              │ 310K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 55.5                                │
+│ csv-js                 │ 296K   │ ░░░░░░░░░░░░░░░░░░░░░░ 52.8                                 │
+│ csv42                  │ 285K   │ ░░░░░░░░░░░░░░░░░░░░░ 50.9                                  │
+│ comma-separated-values │ 258K   │ ░░░░░░░░░░░░░░░░░░░ 46.1                                    │
+│ CSVtoJSON              │ 247K   │ ░░░░░░░░░░░░░░░░░░░ 44.2                                    │
+│ csv-simple-parser      │ 245K   │ ░░░░░░░░░░░░░░░░░░ 43.8                                     │
+│ dekkai                 │ 244K   │ ░░░░░░░░░░░░░░░░░░ 43.6                                     │
+│ csv-parser (neat-csv)  │ 229K   │ ░░░░░░░░░░░░░░░░░ 40.9                                      │
+│ ACsv                   │ 223K   │ ░░░░░░░░░░░░░░░░░ 39.8                                      │
+│ SheetJS                │ 207K   │ ░░░░░░░░░░░░░░░░ 36.9                                       │
+│ @vanillaes/csv         │ 199K   │ ░░░░░░░░░░░░░░░ 35.5                                        │
+│ node-csvtojson         │ 170K   │ ░░░░░░░░░░░░░ 30.4                                          │
+│ csv-parse/sync         │ 123K   │ ░░░░░░░░░ 22                                                │
+│ @fast-csv/parse        │ 80K    │ ░░░░░░ 14.3                                                 │
+│ jquery-csv             │ 55.1K  │ ░░░░░ 9.84                                                  │
+│ but-csv                │ ---    │ Wrong row count! Expected: 33790, Actual: 1                 │
+│ @gregoranders/csv      │ ---    │ Invalid CSV at 1:109                                        │
+│ utils-dsv-base-parse   │ ---    │ unexpected error. Encountered an invalid record. Field 17 o │
+│ json-2-csv             │ ---    │ Wrong row count! Expected: 33790, Actual: 0                 │
 └────────────────────────┴────────┴─────────────────────────────────────────────────────────────┘
 ```
 

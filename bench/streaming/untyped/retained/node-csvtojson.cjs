@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'node-csvtojson (file)',
+  name: 'node-csvtojson (stream)',
   repo: 'https://github.com/Keyang/csvbench',
   repo: 'https://github.com/Keyang/node-csvtojson',
   load: async () => {

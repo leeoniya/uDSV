@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'csv-parser (file)',
+  name: 'csv-parser (stream)',
   repo: 'https://github.com/mafintosh/csv-parser',
   load: async () => {
     const { default: csvParser } = await import('csv-parser');

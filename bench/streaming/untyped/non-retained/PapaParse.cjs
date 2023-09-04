@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'PapaParse (file, sum)',
+  name: 'PapaParse (stream, sum)',
   repo: 'https://github.com/mholt/PapaParse',
   load: async () => {
     const { default: Papa } = await import('papaparse');

@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'ya-csv (file)',
+  name: 'ya-csv (stream)',
   repo: 'https://github.com/koles/ya-csv',
   load: async () => {
     const yaCsv = require('ya-csv');

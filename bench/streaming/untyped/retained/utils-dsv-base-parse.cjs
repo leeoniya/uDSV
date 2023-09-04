@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 module.exports = {
-  name: 'utils-dsv-base-parse (file)',
+  name: 'utils-dsv-base-parse (stream)',
   repo: 'https://github.com/stdlib-js/utils-dsv-base-parse',
   load: async () => {
     let { default: Parser } = await import('@stdlib/utils-dsv-base-parse');

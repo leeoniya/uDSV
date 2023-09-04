@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'csv-rex (file)',
+  name: 'csv-rex (stream)',
   repo: 'https://github.com/willfarrell/csv-rex',
   load: async () => {
     const { createReadStream } = await import('node:fs');

@@ -3,8 +3,6 @@
 
 const CYCLE_DELAY = 10_000;
 
-const baselineRSS = process.memoryUsage().rss;
-
 const fs = require('node:fs');
 const { genTable } = require('./table.cjs');
 
@@ -102,6 +100,8 @@ let typedParsers = [
   './non-streaming/typed/PapaParse-arrs.cjs',
   // './non-streaming/typed/PapaParse-objs.cjs',
 
+  './non-streaming/typed/dekkai.cjs',
+
   './non-streaming/typed/csv-js.cjs',
   './non-streaming/typed/vanillaes-csv.cjs',
   './non-streaming/typed/SheetJS.cjs',
@@ -131,9 +131,17 @@ let untypedParsers = [
   './non-streaming/untyped/but-csv.cjs',
   './non-streaming/untyped/csv-simple-parser.cjs',
   './non-streaming/untyped/node-csvtojson.cjs',
-  './non-streaming/untyped/SheetJS.cjs',
   './non-streaming/untyped/comma-separated-values.cjs',
   './non-streaming/untyped/achilles-csv-parser.cjs',
+
+  './non-streaming/untyped/dekkai.cjs',
+  // './non-streaming/untyped/dekkai-native.cjs',
+  // './non-streaming/untyped/dekkai-native-row-access.cjs',
+  // './non-streaming/untyped/dekkai-native-value-access.cjs',
+
+  './non-streaming/untyped/SheetJS.cjs',
+  // './non-streaming/untyped/SheetJS-native.cjs',
+
   './non-streaming/untyped/vanillaes-csv.cjs',
   './non-streaming/untyped/CSVtoJSON.cjs',
   './non-streaming/untyped/ts-csv.cjs',
@@ -145,9 +153,7 @@ let untypedParsers = [
   './non-streaming/untyped/fast-csv.cjs',
   './non-streaming/untyped/utils-dsv-base-parse.cjs',
 
-  // TODO: https://github.com/amin2312/ACsv/tree/main/release/js
-  // TODO: https://github.com/mrodrig/json-2-csv
-  // TODO: https://www.npmjs.com/package/datalib
+  // './non-streaming/untyped/json-2-csv.cjs',
 ];
 
 let streamingParsers = [
@@ -204,7 +210,7 @@ async function go(parserPath, dataPath, dataSize) {
       results.push({
         name: parserName,
         ...r,
-        rss: r.rss == null ? null : r.rss - baselineRSS,
+        rss: r.rss == null ? null : r.rss - r.rssBase,
       });
     } catch (e) {
       console.log(res);
@@ -233,7 +239,7 @@ async function go(parserPath, dataPath, dataSize) {
     let { cols, rows } = results.find(r => r.rows != null) ?? { cols: 0, rows: 0 };
 
     let dataHeader = `${dataPath.split('/').pop()} (${fmtNum2(dataSizeMiB)} MB, ${fmtNum2(cols)} cols x ${fmtNum2(rows)} rows)`;
-    let rssHeader = `RSS above ${formatBytes(baselineRSS, 0)} baseline (MiB)`;
+    let rssHeader = `RSS above ${formatBytes(results[0].rssBase, 0)} baseline (MiB)`;
 
     let tableRows = results.map(({ name, gmean, rows, sample, types, error, rss }) => {
       if (error != null) {
