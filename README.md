@@ -85,7 +85,7 @@ npm i udsv
 
 or
 
-```
+```html
 <script src="./dist/uDSV.iife.min.js"></script>
 ```
 
