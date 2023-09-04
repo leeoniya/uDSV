@@ -12,7 +12,7 @@ const fs = require('fs');
 
 const Papa = require('papaparse'); // for output validation
 
-const csvStr = verify ? fs.readFileSync(dataPath, 'utf8') : ''; // only if non stream mode?
+const csvStr = !parserMod.includes('/streaming/') ? fs.readFileSync(dataPath, 'utf8') : ''; // only if non stream mode?
 
 const expected = verify ? Papa.parse(csvStr).data : [];
 
@@ -110,7 +110,7 @@ async function bench(csvStr, path, parse) {
     if (result._isCols) {
       let countRows = parser.countRows ?? (result => Object.keys(result[0] ?? []).length);
       let countCols = parser.countCols ?? (result => result.length);
-      let getSample = parser.getSample ?? (result.map(c => c.slice(0, 10)));
+      let getSample = parser.getSample ?? (result => result.map(c => c.slice(0, 10)));
       let getTypes  = parser.getTypes  ?? (result => {
         types = new Set();
 

@@ -113,10 +113,12 @@ let typedParsers = [
 
   // './non-streaming/typed/PapaParse-arrs-manual.cjs',
   // './non-streaming/typed/but-csv-manual.cjs',
+];
 
+let typedDeepParsers = [
+  './non-streaming/typed/uDSV-deep.cjs',
+  './non-streaming/typed/csv42-deep.cjs',
   // './non-streaming/typed/node-csvtojson-deep.cjs', // doesnt work without explicit column typing?
-  // './non-streaming/typed/csv42-deep.cjs',
-  // './non-streaming/typed/uDSV-deep.cjs',
   // './non-streaming/typed/PapaParse-deep.cjs',      // invalid, does not flatten more than 2 levels
 ];
 
@@ -124,7 +126,10 @@ let untypedParsers = [
   // './non-streaming/untyped/string-split.cjs',
 
   './non-streaming/untyped/uDSV.cjs',
+
   './non-streaming/untyped/PapaParse.cjs',
+  // './non-streaming/untyped/PapaParse-objs.cjs',
+
   './non-streaming/untyped/ACsv.cjs',
   './non-streaming/untyped/d3-dsv.cjs',
   './non-streaming/untyped/csv-rex.cjs',
@@ -175,6 +180,7 @@ let streamingParsers = [
 let parserPaths = [
   ...untypedParsers,
   // ...typedParsers,
+  // ...typedDeepParsers,
   // ...streamingParsers,
 ];
 
@@ -187,7 +193,7 @@ async function go(parserPath, dataPath, dataSize) {
 
   let dataSizeMiB = dataSize / 1024 / 1024;
 
-  let verify = parserPath.includes('non-retained') ? 0 : 1;
+  let verify = parserPath.includes('non-retained') || parserPath.includes('deep') ? 0 : 1;
 
   let result = spawnSync(bin, cmd.concat([
     // `--max-old-space-size=8192`,

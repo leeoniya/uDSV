@@ -814,4 +814,78 @@ Here's a run with our numeric litmus dataset, which shows similar results:
 ---
 ### Output Formats
 
+For libs that support different output formats (tuples, objects, columns, nested objects), there is often a performance penalty for when switching away from the default.
+
+We're not going to look at every lib here, but switching PapaParse to object mode (`header: true`) looks like this:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ litmus_strings.csv (1.9 MB, 20 cols x 10K rows)                                                                                                                                     │
+├──────────────┬────────┬─────────────────────────────────────────────────────────────┬─────────────────────────────────┬────────┬────────────────────────────────────────────────────┤
+│ Name         │ Rows/s │ Throughput (MiB/s)                                          │ RSS above 68 MiB baseline (MiB) │ Types  │ Sample                                             │
+├──────────────┼────────┼─────────────────────────────────────────────────────────────┼─────────────────────────────────┼────────┼────────────────────────────────────────────────────┤
+│ PapaParse    │ 649K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 124 │ ░░░░░░░░░░░░░░░░░░ 140          │ string │ [["HCbe","029","PP1kw","igSUIHib6H3t","Pd98sXAUBj" │
+│ PapaParse {} │ 237K   │ ░░░░░░░░░░░░░░░░░░░░░ 45.2                                  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░ 210 │ string │ [{"GtQ56taEqPynZE":"m 2tn5AF","wEAh":"ywO","f5z":" │
+└──────────────┴────────┴─────────────────────────────────────────────────────────────┴─────────────────────────────────┴────────┴────────────────────────────────────────────────────┘
+```
+
+Here are uDSV output formats compared:
+
+```
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ litmus_strings.csv (1.9 MB, 20 cols x 10K rows)                                                                                                                                   │
+├───────────┬────────┬─────────────────────────────────────────────────────────────┬──────────────────────────────────┬────────┬────────────────────────────────────────────────────┤
+│ Name      │ Rows/s │ Throughput (MiB/s)                                          │ RSS above 70 MiB baseline (MiB)  │ Types  │ Sample                                             │
+├───────────┼────────┼─────────────────────────────────────────────────────────────┼──────────────────────────────────┼────────┼────────────────────────────────────────────────────┤
+│ uDSV []   │ 1.32M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 251 │ ░░░░░░░░░░░░░░░░░░░░░░ 45.9      │ string │ [["m 2tn5AF","ywO","tecaOIw6K1XLXf","osxLRmM0A3Eo" │
+│ uDSV {}   │ 1.3M   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 247 │ ░░░░░░░░░░░░░░░░░░░░░░ 46        │ string │ [{"GtQ56taEqPynZE":"m 2tn5AF","wEAh":"ywO","f5z":" │
+│ uDSV cols │ 1.13M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 215        │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░ 57.9 │ string │ [["029","ywO","0Drg6JKS","2lkn","dsn","XgIzj","7Yg │
+└───────────┴────────┴─────────────────────────────────────────────────────────────┴──────────────────────────────────┴────────┴────────────────────────────────────────────────────┘
+```
+
 #### Nested Objects
+
+[csv42](https://github.com/josdejong/csv42) was written to improve on parsing and stringifying nested JSON structures to and from CSV: https://jsoneditoronline.org/indepth/parse/csv-parser-javascript/
+
+While uDSV does not currently offer CSV generation, it does offer ~4.5x faster deep parsing to structured objects:
+
+**csv42_nested_10k.csv**
+
+```csv
+_type,name,description,location.city,location.street,location.geo[0],location.geo[1],speed,heading,size[0],size[1],size[2],"field with , delimiter","field with "" double quote"
+item,Item 1,Item 1 description in text,Rotterdam,Main street,60.4770016,72.9305049,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+item,Item 2,Item 2 description in text,Rotterdam,Main street,91.9676756,14.0882905,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+item,Item 3,Item 3 description in text,Rotterdam,Main street,14.8318042,36.3390012,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+item,Item 4,Item 4 description in text,Rotterdam,Main street,25.8552221,94.8248616,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+item,Item 5,Item 5 description in text,Rotterdam,Main street,32.1099148,48.0531795,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+item,Item 6,Item 6 description in text,Rotterdam,Main street,32.2514711,92.7409621,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+```
+
+```js
+[
+  {
+    _type: 'item',
+    name: 'Item 1',
+    description: 'Item 1 description in text',
+    location: {
+      city: 'Rotterdam',
+      street: 'Main street',
+      geo: [ 51.9280712, 4.4207888 ]
+    },
+    speed: 5.4,
+    heading: 128.3,
+    size: [ 3.4, 5.1, 0.9 ],
+  }
+]
+```
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ csv42_nested_10k.csv (1.6 MB, 9 cols x 10K rows)                                                                                                                                                               │
+├─────────────────────┬────────┬─────────────────────────────────────────────────────────────┬─────────────────────────────────┬────────────────────────────┬────────────────────────────────────────────────────┤
+│ Name                │ Rows/s │ Throughput (MiB/s)                                          │ RSS above 49 MiB baseline (MiB) │ Types                      │ Sample                                             │
+├─────────────────────┼────────┼─────────────────────────────────────────────────────────────┼─────────────────────────────────┼────────────────────────────┼────────────────────────────────────────────────────┤
+│ uDSV typed deep {}  │ 1.14M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 178 │ ░░░░░░░░░░░░░ 62.5              │ array,number,object,string │ [{"_type":"item","name":"Item 2","description":"It │
+│ csv42 typed deep {} │ 258K   │ ░░░░░░░░░░░░░ 40.5                                          │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░ 131 │ array,number,object,string │ [{"_type":"item","name":"Item 2","description":"It │
+└─────────────────────┴────────┴─────────────────────────────────────────────────────────────┴─────────────────────────────────┴────────────────────────────┴────────────────────────────────────────────────────┘
+```
