@@ -38,9 +38,9 @@ it's faster than the parsers you recognize and faster than those you've never he
 On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
 Papa Parse is used as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
 
-Most CSV parsers have one happy/fast path -- one that's typically without quoted values, without value typing, and only with default settings and output format.
+Most CSV parsers have one happy/fast path -- the one without quoted values, without value typing, and using the default settings & output format.
 Once you're off that path, you can generally throw their self-promoting benchmarks in the trash.
-In contrast, uDSV remains fast through all datasets and any options.
+In contrast, uDSV remains fast with all datasets and options; its happy path is _every path_.
 
 For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
 
