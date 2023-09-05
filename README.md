@@ -14,7 +14,7 @@ The aim of this project is to handle the 99.5% use-case without adding complexit
 ---
 ### Features
 
-What does μDSV pack into 5KB?
+What does uDSV pack into 5KB?
 
 - [RFC 4180](https://datatracker.ietf.org/doc/html/rfc4180) compliant
 - Incremental or full parsing, with optional accumulation
@@ -32,14 +32,14 @@ Of course, _most_ of these are table stakes for CSV parsers :)
 
 Is it Lightning Fast™ or Blazing Fast™?
 
-No, those are too slow! μDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0);
+No, those are too slow! uDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0);
 it's faster than the parsers you recognize and faster than those you've never heard of.
 
 On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
 Papa Parse is used as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
 
-Most CSV parsers have one happy path for high performance -- one that's typically without quoted values, without value typing, and only with default settings and output format.
-Once you're off that happy path, you can mostly throw their self-promoting benchmarks in the trash.
+Most CSV parsers have one happy/fast path -- one that's typically without quoted values, without value typing, and only with default settings and output format.
+Once you're off that path, you can generally throw their self-promoting benchmarks in the trash.
 In contrast, uDSV remains fast through all datasets and any options.
 
 For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
@@ -105,7 +105,7 @@ let csvStr = 'a,b,c\n1,2,3\n4,5,6';
 let schema = inferSchema(csvStr);
 let parser = initParser(schema);
 
-// fastest/native format
+// native format (fastest)
 let stringArrs = parser.stringArrs(csvStr); // [ ['1','2','3'], ['4','5','6'] ]
 
 // typed formats (internally converted from native)
@@ -147,10 +147,16 @@ let typedDeep = parser2.typedDeep(csvStr2);
 */
 ```
 
+**CSP Note:**
+
+uDSV uses dynamically-generated functions (via `new Function()`) for its `.typed*()` methods.
+These functions are lazy-generated and use `JSON.stringify()` [code-injection guards](https://github.com/leeoniya/uDSV/commit/4e7472a7015c0a7ae5ae76e41f282bd4bdcf0c67), so the risk should be minimal.
+Nevertheless, if you have strict [CSP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) without `unsafe-eval`, you won't be able to take advantage of the typed methods and will have to do the type conversion from the string tuples yourself.
+
 ---
 ### Incremental / Streaming
 
-μDSV has no inherent knowledge of streams.
+uDSV has no inherent knowledge of streams.
 Instead, it exposes a generic incremental parsing API to which you can pass sequential chunks.
 These chunks can come from various sources, such as a [Web Stream](https://css-tricks.com/web-streams-everywhere-and-fetch-for-node-js/) or [Node stream](https://nodejs.org/api/stream.html) via `fetch()` or `fs`, a [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API), etc.
 
