@@ -473,6 +473,32 @@ test('variable size chunks (incremental/streaming)', async (t) => {
     }
 });
 
+test('chunk boundary between \\r and \\n ', async (t) => {
+    function chunkString(str, len) {
+        return str.match(new RegExp(`.{1,${len}}`, 'gms'));
+    }
+
+    const csvStr = 'a,b,c\r\n1,2,3\r\n4,5,6'
+
+    let schema  = inferSchema(csvStr);
+    schema.skip = 0;
+    let parser = initParser(schema);
+    let rows = parser.stringArrs(csvStr);
+
+    let chunkSizes = [5,6,7,8,9];
+
+    chunkSizes.forEach(chunkSize => {
+        let chunks = chunkString(csvStr, chunkSize);
+
+        chunks.forEach(chunk => {
+            parser.chunk(chunk, parser.stringArrs);
+        });
+
+        let rowsIncr = parser.end();
+        assert.deepEqual(rowsIncr, rows);
+    });
+});
+
 test('string/number/bool/date/json', (t) => {
     const csvStr = `
         "zip","lat","lng","city","state_id","state_name","zcta","parent_zcta","population","density","county_fips","county_name","county_weights","county_names_all","county_fips_all","imprecise","military","timezone","date"
