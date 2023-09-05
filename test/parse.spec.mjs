@@ -537,6 +537,99 @@ test('semi separated values', (t) => {
     ]);
 });
 
+test('typed boolean & object keys injection guard', (t) => {
+    const csvStr = `bool,"; a < b "" \\"" = {}"\ntrue,TRUE`;
+
+    {
+        let schema = inferSchema(csvStr, {col: ','});
+        let parser = initParser(schema);
+
+        let rows = parser.typedObjs(csvStr);
+
+        assert.deepEqual(rows, [
+            {
+                'bool': true,
+                '; a < b " \\" = {}': true,
+            }
+        ]);
+    }
+
+    {
+        let schema = inferSchema(csvStr, {col: ','});
+        schema.cols[1].type = 'b:"" let x = 5; {}';
+        let parser = initParser(schema,);
+
+        let rows = parser.typedObjs(csvStr);
+
+        assert.deepEqual(rows, [
+            {
+                'bool': true,
+                '; a < b " \\" = {}': false,
+            }
+        ]);
+    }
+});
+
+test('repl injection guard', (t) => {
+    const csvStr = `a,b\nNaN,5\n10,null\n3,`;
+
+    {
+        let schema = inferSchema(csvStr);
+
+        schema.cols.forEach(c => {
+            c.repl = {
+                'empty': 'console.log("")',
+                'null': 'console.log(null)',
+                'NaN': 'console.log(NaN)',
+            };
+        });
+
+        let parser = initParser(schema);
+
+        let rows = parser.typedObjs(csvStr);
+
+        assert.deepEqual(rows, [
+            {
+                a: 'console.log(NaN)',
+                b: 5
+            },
+            {
+                a: 10,
+                b: 'console.log(null)'
+            }
+            // TODO: where is {a: 3, b: 'console.log("")'} ?
+        ]);
+    }
+
+    {
+        let schema = inferSchema(csvStr);
+
+        schema.cols.forEach(c => {
+            c.repl = {
+                'empty': null,
+                'null': null,
+                'NaN': null,
+            };
+        });
+
+        let parser = initParser(schema);
+
+        let rows = parser.typedObjs(csvStr);
+
+        assert.deepEqual(rows, [
+            {
+                a: null,
+                b: 5
+            },
+            {
+                a: 10,
+                b: null
+            }
+            // TODO: where is {a: 3, b: null} ?
+        ]);
+    }
+});
+
 // TODO:
 // "", ", """ (at EOL)
 // single line with no linebreak

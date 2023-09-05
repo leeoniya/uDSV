@@ -78,23 +78,26 @@ function guessType(ci, rows) {
 	return t;
 }
 
+const toJSON = JSON.stringify;
+const onlyStrEsc = v => typeof v === 'string' ? toJSON(v) : v;
+
 function getValParseExpr(ci, col) {
 	let { type } = col;
 
 	let rv = `r[${ci}]`;
 
 	let parseExpr =
-		type    === T_DATE    ? `new Date(${rv})`                             :
-		type    === T_JSON    ? `JSON.parse(${rv})`                           :
-		type    === T_NUMBER  ? `+${rv}`                                      :
-		type[0] === T_BOOLEAN ? `${rv} === '${type.slice(2)}' ? true : false` :
+		type    === T_DATE    ? `new Date(${rv})`                                   :
+		type    === T_JSON    ? `JSON.parse(${rv})`                                 :
+		type    === T_NUMBER  ? `+${rv}`                                            :
+		type[0] === T_BOOLEAN ? `${rv} === ${toJSON(type.slice(2))} ? true : false` :
 		rv;
 
 	let { repl } = col;
 
-	let nanExpr   = repl.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${repl.NaN} : `                       : '';
-	let nullExpr  = repl.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${repl.null} : ` : '';
-	let emptyExpr = repl.empty !== void 0                      ? `${rv} === '' ? ${repl.empty} : `                        : '';
+	let nanExpr   = repl.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${onlyStrEsc(repl.NaN)} : `                       : '';
+	let nullExpr  = repl.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${onlyStrEsc(repl.null)} : ` : '';
+	let emptyExpr = repl.empty !== void 0                      ? `${rv} === '' ? ${onlyStrEsc(repl.empty)} : `                        : '';
 
 	return `${emptyExpr} ${nullExpr} ${nanExpr} ${parseExpr}`;
 }
@@ -135,7 +138,7 @@ function genToTypedRows(cols, objs = false, deep = false) {
 			colIdx++;
 		} while (paths.length > 0);
 
-		buf = JSON.stringify(tplObj).replace(/"¦(\d+)¦"/g, (m, ci) => getValParseExpr(+ci, cols[+ci]));
+		buf = toJSON(tplObj).replace(/"¦(\d+)¦"/g, (m, ci) => getValParseExpr(+ci, cols[+ci]));
 	}
 	else {
 		if (!objs && cols.every(c => c.type === T_STRING))
@@ -144,7 +147,7 @@ function genToTypedRows(cols, objs = false, deep = false) {
 			buf = objs ? '{' : '[';
 
 			cols.forEach((col, ci) => {
-				buf += objs ? `"${col.name.replaceAll('"', '\\"')}":` : '';
+				buf += objs ? `${toJSON(col.name)}:` : '';
 				let parseVal = getValParseExpr(ci, col);
 				buf += `${parseVal},`;
 			});
