@@ -471,6 +471,9 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 			}
 		}
 
+		if (withEOF && colIdx === lastColIdx)
+			--skip < 0 && rows.push(row);
+
 		if (!withEOF || rows.length > 0)
 			cb(rows, !withEOF ? csvStr.slice(linePos) : '');
 

@@ -472,6 +472,9 @@ var uDSV = (function (exports) {
 				}
 			}
 
+			if (withEOF && colIdx === lastColIdx)
+				--skip < 0 && rows.push(row);
+
 			if (!withEOF || rows.length > 0)
 				cb(rows, !withEOF ? csvStr.slice(linePos) : '');
 

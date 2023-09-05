@@ -324,6 +324,51 @@ test('quoted path { trim: true }', (t) => {
     }
 });
 
+
+test('unquoted path empty col at EOF', (t) => {
+    const csvStr = `a,b,c\n1,2,\n4,5,`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2', ''],
+        ['4','5', ''],
+    ]);
+});
+
+test('quoted path empty col at EOF', (t) => {
+    {
+        const csvStr = `"a","b","c"\n1,2,\n4,5,`;
+
+        let schema = inferSchema(csvStr);
+        let parser = initParser(schema);
+
+        let rows = parser.stringArrs(csvStr);
+
+        assert.deepEqual(rows, [
+            ['1','2', ''],
+            ['4','5', ''],
+        ]);
+    }
+
+    {
+        const csvStr = `"a","b","c"\n"1","2",\n"4",5,""`;
+
+        let schema = inferSchema(csvStr);
+        let parser = initParser(schema);
+
+        let rows = parser.stringArrs(csvStr);
+
+        assert.deepEqual(rows, [
+            ['1','2', ''],
+            ['4','5', ''],
+        ]);
+    }
+});
+
 const deepObjs = `
 _type,name,description,location.city,location.street,location.geo[0],location.geo[1],speed,heading,size[0],size[1],size[2],"field with , delimiter","field with "" double quote"
 item,Item 0,Item 0 description in text,Rotterdam,Main street,51.9280712,4.4207888,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
@@ -596,8 +641,11 @@ test('repl injection guard', (t) => {
             {
                 a: 10,
                 b: 'console.log(null)'
+            },
+            {
+                a: 3,
+                b: 'console.log("")'
             }
-            // TODO: where is {a: 3, b: 'console.log("")'} ?
         ]);
     }
 
@@ -624,8 +672,11 @@ test('repl injection guard', (t) => {
             {
                 a: 10,
                 b: null
+            },
+            {
+                a: 3,
+                b: null,
             }
-            // TODO: where is {a: 3, b: null} ?
         ]);
     }
 });
