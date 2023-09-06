@@ -35,7 +35,7 @@ Is it Lightning Fast™ or Blazing Fast™?
 No, those are too slow! uDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0);
 it's faster than the parsers you recognize and faster than those you've never heard of.
 
-On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.5.1, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
+On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.6.0, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
 Papa Parse is used as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
 
 Most CSV parsers have one happy/fast path -- the one without quoted values, without value typing, and using the default settings & output format.
@@ -50,29 +50,28 @@ For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/b
 ├────────────────────────┬────────┬─────────────────────────────────────────────────────────────┤
 │ Name                   │ Rows/s │ Throughput (MiB/s)                                          │
 ├────────────────────────┼────────┼─────────────────────────────────────────────────────────────┤
-│ uDSV                   │ 754K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 135 │
-│ achilles-csv-parser    │ 474K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 84.7                    │
-│ d3-dsv                 │ 433K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 77.3                       │
-│ csv-rex                │ 361K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░ 64.4                            │
-│ PapaParse              │ 310K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 55.5                                │
-│ csv-js                 │ 296K   │ ░░░░░░░░░░░░░░░░░░░░░░ 52.8                                 │
-│ csv42                  │ 285K   │ ░░░░░░░░░░░░░░░░░░░░░ 50.9                                  │
+│ uDSV                   │ 782K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 140 │
+│ csv-simple-parser      │ 682K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 122        │
+│ achilles-csv-parser    │ 469K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 83.8                      │
+│ d3-dsv                 │ 433K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 77.4                        │
+│ csv-rex                │ 346K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░ 61.9                              │
+│ PapaParse              │ 305K   │ ░░░░░░░░░░░░░░░░░░░░░░ 54.5                                 │
+│ csv42                  │ 296K   │ ░░░░░░░░░░░░░░░░░░░░░ 52.9                                  │
+│ csv-js                 │ 285K   │ ░░░░░░░░░░░░░░░░░░░░░ 50.9                                  │
 │ comma-separated-values │ 258K   │ ░░░░░░░░░░░░░░░░░░░ 46.1                                    │
-│ CSVtoJSON              │ 247K   │ ░░░░░░░░░░░░░░░░░░░ 44.2                                    │
-│ csv-simple-parser      │ 245K   │ ░░░░░░░░░░░░░░░░░░ 43.8                                     │
-│ dekkai                 │ 244K   │ ░░░░░░░░░░░░░░░░░░ 43.6                                     │
-│ csv-parser (neat-csv)  │ 229K   │ ░░░░░░░░░░░░░░░░░ 40.9                                      │
-│ ACsv                   │ 223K   │ ░░░░░░░░░░░░░░░░░ 39.8                                      │
-│ SheetJS                │ 207K   │ ░░░░░░░░░░░░░░░░ 36.9                                       │
-│ @vanillaes/csv         │ 199K   │ ░░░░░░░░░░░░░░░ 35.5                                        │
-│ node-csvtojson         │ 170K   │ ░░░░░░░░░░░░░ 30.4                                          │
-│ csv-parse/sync         │ 123K   │ ░░░░░░░░░ 22                                                │
-│ @fast-csv/parse        │ 80K    │ ░░░░░░ 14.3                                                 │
-│ jquery-csv             │ 55.1K  │ ░░░░░ 9.84                                                  │
+│ dekkai                 │ 248K   │ ░░░░░░░░░░░░░░░░░░ 44.3                                     │
+│ CSVtoJSON              │ 245K   │ ░░░░░░░░░░░░░░░░░░ 43.8                                     │
+│ csv-parser (neat-csv)  │ 218K   │ ░░░░░░░░░░░░░░░░ 39                                         │
+│ ACsv                   │ 218K   │ ░░░░░░░░░░░░░░░░ 39                                         │
+│ SheetJS                │ 208K   │ ░░░░░░░░░░░░░░░ 37.1                                        │
+│ @vanillaes/csv         │ 200K   │ ░░░░░░░░░░░░░░░ 35.8                                        │
+│ node-csvtojson         │ 165K   │ ░░░░░░░░░░░░ 29.4                                           │
+│ csv-parse/sync         │ 125K   │ ░░░░░░░░░ 22.4                                              │
+│ @fast-csv/parse        │ 78.2K  │ ░░░░░░ 14                                                   │
+│ jquery-csv             │ 55.1K  │ ░░░░ 9.85                                                   │
 │ but-csv                │ ---    │ Wrong row count! Expected: 33790, Actual: 1                 │
 │ @gregoranders/csv      │ ---    │ Invalid CSV at 1:109                                        │
 │ utils-dsv-base-parse   │ ---    │ unexpected error. Encountered an invalid record. Field 17 o │
-│ json-2-csv             │ ---    │ Wrong row count! Expected: 33790, Actual: 0                 │
 └────────────────────────┴────────┴─────────────────────────────────────────────────────────────┘
 ```
 

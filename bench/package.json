@@ -27,7 +27,7 @@
     "csv-parser": "^3.0.0",
     "csv-parser-2": "^1.0.1",
     "csv-rex": "^0.7.0",
-    "csv-simple-parser": "^1.0.1",
+    "csv-simple-parser": "^1.0.2",
     "csv42": "^4.0.0",
     "csvtojson": "^2.0.10",
     "d3-dsv": "^3.0.1",
