@@ -58,13 +58,11 @@ for (let i = 0; i < rows; i++) {
 
 fs.writeFileSync(__dirname + '/data/litmus_quoted.csv', out.join('\n'));
 
-
 /*
 // https://github.com/josdejong/csv42/tree/main/benchmark
 
-let len = 10_000;
-
 {
+  let len = 10_000;
   let testHuge = Array(len);
 
   testHuge[0] = `_type,name,description,city,street,latitude,longitude,speed,heading,"field with , delimiter","field with "" double quote"`;
@@ -77,6 +75,7 @@ let len = 10_000;
 }
 
 {
+  let len = 10_000;
   let testHuge = Array(len);
 
   testHuge[0] = `_type,name,description,location.city,location.street,location.geo[0],location.geo[1],speed,heading,size[0],size[1],size[2],"field with , delimiter","field with "" double quote"`;
@@ -86,6 +85,19 @@ let len = 10_000;
   }
 
   fs.writeFileSync('./csv42_nested_10k.csv', testHuge.join("\n"));
+}
+
+{
+  let len = 10_000;
+  let testHuge = Array(len);
+
+  testHuge[0] = `_type,name,description,location.city,location.street,location.geo.0,location.geo.1,speed,heading,size.0,size.1,size.2,"field with , delimiter","field with "" double quote"`;
+
+  for (let i = 1; i < len; i++) {
+    testHuge[i] = `item,Item ${i},Item ${i} description in text,Rotterdam,Main street,${(Math.random() * 100).toFixed(7)},${(Math.random() * 100).toFixed(7)},5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"`;
+  }
+
+  fs.writeFileSync('./csv42_nested_10k_dot.csv', testHuge.join("\n"));
 }
 */
 

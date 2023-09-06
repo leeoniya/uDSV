@@ -59,6 +59,7 @@ let synthData = [
   // https://github.com/josdejong/csv42/tree/main/benchmark
   // './bench/data/csv42_flat_10k.csv',
   // './bench/data/csv42_nested_10k.csv',
+  // './bench/data/csv42_nested_10k_dot.csv',
 
   // https://github.com/willfarrell/csv-benchmarks
   // './bench/data/10x10000_slim.csv',
@@ -118,8 +119,8 @@ let typedParsers = [
 let typedDeepParsers = [
   './non-streaming/typed/uDSV-deep.cjs',
   './non-streaming/typed/csv42-deep.cjs',
+  './non-streaming/typed/PapaParse-deep.cjs',
   // './non-streaming/typed/node-csvtojson-deep.cjs', // doesnt work without explicit column typing?
-  // './non-streaming/typed/PapaParse-deep.cjs',      // invalid, does not flatten more than 2 levels
 ];
 
 let untypedParsers = [

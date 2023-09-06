@@ -114,7 +114,7 @@ var uDSV = (function (exports) {
 			let tplObj = {};
 			let colIdx = 0;
 
-			let paths = cols.map(c => c.name);
+			let paths = cols.map(c => c.name.replace(/\.(\d+)\.?/gi, '[$1]'));
 
 			do {
 				let path = paths.shift();

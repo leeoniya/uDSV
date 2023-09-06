@@ -369,11 +369,6 @@ test('quoted path empty col at EOF', (t) => {
     }
 });
 
-const deepObjs = `
-_type,name,description,location.city,location.street,location.geo[0],location.geo[1],speed,heading,size[0],size[1],size[2],"field with , delimiter","field with "" double quote"
-item,Item 0,Item 0 description in text,Rotterdam,Main street,51.9280712,4.4207888,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
-`.trim();
-
 test('typed arrs', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,5,6`;
 
@@ -417,7 +412,38 @@ test('typed cols', (t) => {
     ]);
 });
 
-test('typed objs (deep)', (t) => {
+test('typed objs (deep [0])', (t) => {
+    const deepObjs = `
+    _type,name,description,location.city,location.street,location.geo[0],location.geo[1],speed,heading,size[0],size[1],size[2],"field with , delimiter","field with "" double quote"
+    item,Item 0,Item 0 description in text,Rotterdam,Main street,51.9280712,4.4207888,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+    `.trim().replace(/^\s+/gm, '');
+
+    let parser = initParser(inferSchema(deepObjs));
+    let rows = parser.typedDeep(deepObjs);
+
+    assert.deepEqual(rows, [{
+        _type: 'item',
+        name: 'Item 0',
+        description: 'Item 0 description in text',
+        location: {
+          city: 'Rotterdam',
+          street: 'Main street',
+          geo: [ 51.9280712, 4.4207888 ]
+        },
+        speed: 5.4,
+        heading: 128.3,
+        size: [ 3.4, 5.1, 0.9 ],
+        'field with , delimiter': 'value with , delimiter',
+        'field with " double quote': 'value with " double quote'
+      }]);
+});
+
+test('typed objs (deep .0)', (t) => {
+    const deepObjs = `
+    _type,name,description,location.city,location.street,location.geo.0,location.geo.1,speed,heading,size.0,size.1,size.2,"field with , delimiter","field with "" double quote"
+    item,Item 0,Item 0 description in text,Rotterdam,Main street,51.9280712,4.4207888,5.4,128.3,3.4,5.1,0.9,"value with , delimiter","value with "" double quote"
+    `.trim().replace(/^\s+/gm, '');
+
     let parser = initParser(inferSchema(deepObjs));
     let rows = parser.typedDeep(deepObjs);
 
