@@ -613,7 +613,7 @@ Notes:
 
 Notes:
 
-- The values in the Types column are important. All parsers that show `object` (except SheetJS) ran `JSON.parse()` on the embedded JSON strings for each of 34K rows in this dataset. Additionally, there are 3 columns of boolean values here, so those without `boolean` did not do the work of converting 3 * 34k TRUE/FALSE strings.
+- The values in the Types column are important. All parsers that show `object` called `JSON.parse()` on the embedded JSON strings for each of 34K rows in this dataset. Additionally, there are 3 columns of boolean values here, so those without `boolean` did not do the work of converting 3 * 34k TRUE/FALSE strings.
 
 
 **House Price Index**

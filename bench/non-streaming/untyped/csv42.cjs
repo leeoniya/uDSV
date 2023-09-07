@@ -6,9 +6,7 @@ module.exports = {
     // with numbers and embedded json, but no all-caps bools, no dates
     const { csv2json } = await import('csv42');
 
-    function parseValue(value) {
-      return value.startsWith('"') ? value.substring(1, value.length - 1).replaceAll('""', '"') : value;
-    }
+    const parseValue = v => v;
 
     // doesnt work, since originals contain raw quote-escaped quotes
     // const parseValue2 = value => value;
