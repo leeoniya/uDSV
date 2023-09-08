@@ -177,7 +177,7 @@ stream.on('data', (chunk) => {
 });
 
 stream.on('end', () => {
-  result = p.end();
+  result = parser.end();
 });
 ```
 
