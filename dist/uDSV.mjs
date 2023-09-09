@@ -214,8 +214,6 @@ function inferSchema(csvStr, opts, maxRows) {
 
 	rowDelim ??= firstRowMatch[2];
 	colDelim ??= COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1) ?? '';
-	colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
-	escEncl  ??= colEncl;
 
 	const schema = {
 		skip: 1, // how many header rows to skip
@@ -386,6 +384,9 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		esc:  escEncl,
 		trim,
 	} = schema;
+
+	colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
+	escEncl  ??= colEncl;
 
 	let numCols = _maxCols || schema.cols.length;
 

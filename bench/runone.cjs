@@ -12,7 +12,7 @@ const fs = require('fs');
 
 const Papa = require('papaparse'); // for output validation
 
-const csvStr = !parserMod.includes('/streaming/') ? fs.readFileSync(dataPath, 'utf8') : ''; // only if non stream mode?
+const csvStr = !parserMod.includes('/streaming/non-retained') ? fs.readFileSync(dataPath, 'utf8') : ''; // only if non stream mode?
 
 const expected = verify ? Papa.parse(csvStr).data : [];
 

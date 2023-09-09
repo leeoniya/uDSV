@@ -13,7 +13,7 @@ module.exports = {
 
       readableStream.on('data', (chunk) => {
         let strChunk = chunk.toString();
-        p ??= initParser(inferSchema(strChunk, { encl: '"' }));
+        p ??= initParser(inferSchema(strChunk));
         p.chunk(strChunk, p.stringArrs);
       });
 
@@ -50,7 +50,7 @@ module.exports = {
         chonk += chunk.toString();
 
         if (chonk.length >= CHONK_SIZE) {
-          p ??= initParser(inferSchema(chonk, { encl: '"' }));
+          p ??= initParser(inferSchema(chonk));
           p.chunk(chonk, p.stringArrs);
           chonk = '';
         }

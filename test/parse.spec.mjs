@@ -478,19 +478,29 @@ test('variable size chunks (incremental/streaming)', async (t) => {
 
         // console.log(rows);
 
-        // min chunk must contain full header for schema() to work
-        let minChunkSize = csvStr.indexOf("\n");
+        // min chunk must contain full header + row delim for schema() to work
+        let m = csvStr.match(/\r\n|\r|\n/);
+        let minChunkSize = m.index + m[0].length;
         // 10-ish rows
         let maxChunkSize = minChunkSize * 10;
 
         // let dataKey = csvStr.slice(0, 10);
 
         for (let chunkSize = minChunkSize; chunkSize < maxChunkSize; chunkSize++) {
+            let schema2 = null;
+            let parser2 = null;
+
             chunkString(csvStr, chunkSize).forEach(chunk => {
-                parser.chunk(chunk, parser.stringArrs);
+                if (parser2 == null) {
+                    schema2 = inferSchema(chunk);
+                    schema2.skip = 0;
+                    parser2 = initParser(schema2);
+                }
+
+                parser2.chunk(chunk, parser2.stringArrs);
             });
 
-            let rowsIncr = parser.end();
+            let rowsIncr = parser2.end();
 
             // await t.test(`${dataKey}, chunkSize: ${chunkSize}`, t2 => {
                 assert.deepEqual(rowsIncr, rows);
@@ -511,16 +521,25 @@ test('chunk boundary between \\r and \\n ', async (t) => {
     let parser = initParser(schema);
     let rows = parser.stringArrs(csvStr);
 
-    let chunkSizes = [5,6,7,8,9];
+    let chunkSizes = [7,8,9,10,11,12,13];
 
     chunkSizes.forEach(chunkSize => {
         let chunks = chunkString(csvStr, chunkSize);
 
+        let schema2 = null;
+        let parser2 = null;
+
         chunks.forEach(chunk => {
-            parser.chunk(chunk, parser.stringArrs);
+            if (parser2 == null) {
+                schema2 = inferSchema(chunk);
+                schema2.skip = 0;
+                parser2 = initParser(schema2);
+            }
+
+            parser2.chunk(chunk, parser2.stringArrs);
         });
 
-        let rowsIncr = parser.end();
+        let rowsIncr = parser2.end();
         assert.deepEqual(rowsIncr, rows);
     });
 });
