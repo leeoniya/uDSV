@@ -4,7 +4,7 @@
 *
 * uDSV.js
 * A small, fast CSV parser
-* https://github.com/leeoniya/uDSV (v0.5.2)
+* https://github.com/leeoniya/uDSV (v0.5.3)
 */
 
 'use strict';
