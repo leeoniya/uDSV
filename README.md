@@ -35,12 +35,11 @@ Is it Lightning Fast™ or Blazing Fast™?
 No, those are too slow! uDSV has [Ludicrous Speed™](https://www.youtube.com/watch?v=ygE01sOhzz0);
 it's faster than the parsers you recognize and faster than those you've never heard of.
 
-On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.6.0, a diverse set of benchmarks show a 1x-5x performance boost relative to [Papa Parse](https://www.papaparse.com/).
-Papa Parse is used as a reference not because it's the fastest, but due to its [outsized popularity](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), battle-testedness, and [some external validation](https://leanylabs.com/blog/js-csv-parsers-benchmarks/) of its performance claims.
+Most CSV parsers have one happy/fast path -- the one without quoted values, without value typing, and only when using the default settings & output format.
+Once you're off that path, you can generally throw any self-promoting benchmarks in the trash.
+In contrast, uDSV remains fast with any datasets and all options; its happy path is _every path_.
 
-Most CSV parsers have one happy/fast path -- the one without quoted values, without value typing, and using the default settings & output format.
-Once you're off that path, you can generally throw their self-promoting benchmarks in the trash.
-In contrast, uDSV remains fast with all datasets and options; its happy path is _every path_.
+On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.6.0, a diverse set of benchmarks show a 1x-5x performance boost relative to the [popular](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), [proven-fast](https://leanylabs.com/blog/js-csv-parsers-benchmarks/), [Papa Parse](https://www.papaparse.com/).
 
 For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
 
