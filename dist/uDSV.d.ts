@@ -4,7 +4,7 @@ type DeepReadonly<T> = {
 
 export interface InferSchemaOpts {
 	/** should return an array whose length is how many header rows to skip, and should include a string[] to use for col names */
-	header?: (rows: string[]) => (string[] | null)[]; // default: rows => [rows[0]]
+	header?: (rows: string[][]) => (string[] | null)[]; // default: rows => [rows[0]]
 
 	/** column delimiter (null = infer, ',' = comma) */
 	col?:  string | null;  // null (infers from header in this order: [tab, pipe, semi, comma])
