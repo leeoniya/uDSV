@@ -25,7 +25,7 @@ export interface InferSchemaOpts {
 //	omit?,
 }
 
-export const enum SchemaColumnType {
+export enum SchemaColumnType {
 	String       = 's',
 	Number       = 'n',
 	Date         = 'd',
