@@ -67,6 +67,9 @@ export interface SchemaColumn {
 }
 
 export interface Schema {
+    /** number of initial rows to skip */
+	skip:   number;
+	
 	/** column delimiter */
 	col:    string;
 
