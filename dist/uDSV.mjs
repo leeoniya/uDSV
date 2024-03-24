@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2023, Leon Sorokin
+* Copyright (c) 2024, Leon Sorokin
 * All rights reserved. (MIT Licensed)
 *
 * uDSV.js
@@ -479,6 +479,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
 	escEncl  ??= colEncl;
 
+	let replEsc = `${escEncl}${colEncl}`;
+
 	let numCols = _maxCols || schema.cols.length;
 
 	let _limit = chunkLimit != null;
@@ -581,6 +583,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	let v = "";
 	let c;
 
+	let pos0 = pos;
+
 	while (pos <= endPos) {
 		c = csvStr.charCodeAt(pos);
 
@@ -588,6 +592,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 			if (c === colEnclChar) {
 				inCol = 2;
 				pos += 1;
+				pos0 = pos;
 
 				if (pos > endPos)
 					break;
@@ -649,10 +654,14 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		}
 
 		if (inCol === 2) {
+			let shouldRep = false;
+			let posTo = 0;
+
 			while (true) {
 				if (c === colEnclChar) {
 					if (colEnclChar === escEnclChar) {
 						if (pos + 1 > endPos) { // TODO: test with chunk ending in closing ", even at EOL but not EOF
+							posTo = pos;
 							pos = endPos + 1;
 							break;
 						}
@@ -663,7 +672,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 							pos += 2;
 
 							// MACRO START
-							v += colEncl;
+							shouldRep = true;
 							if (pos > endPos)
 								break;
 							c = csvStr.charCodeAt(pos);
@@ -671,6 +680,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						}
 						else {
 							inCol = 0;
+							posTo = pos;
 							pos += 1;
 							break;
 						}
@@ -682,7 +692,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 							pos += 1;
 
 							// MACRO START
-							v += colEncl;
+							shouldRep = true;
 							if (pos > endPos)
 								break;
 							c = csvStr.charCodeAt(pos);
@@ -690,6 +700,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						}
 						else {
 							inCol = 0;
+							posTo = pos;
 							pos += 1;
 							break;
 						}
@@ -703,10 +714,15 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						break;
 					}
 
-					v += csvStr.slice(pos, colEnclChar === escEnclChar ? pos2 : pos2 - 1);
 					pos = pos2;
 					c = colEnclChar;
 				}
+			}
+
+			if (inCol === 0 || pos > endPos) {
+				v = shouldRep ?
+					csvStr.slice(pos0, posTo).replaceAll(replEsc, colEncl) :
+					csvStr.slice(pos0, posTo);
 			}
 		}
 		else if (inCol === 1) {

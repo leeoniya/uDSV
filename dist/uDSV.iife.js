@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2023, Leon Sorokin
+* Copyright (c) 2024, Leon Sorokin
 * All rights reserved. (MIT Licensed)
 *
 * uDSV.js
@@ -482,6 +482,8 @@ var uDSV = (function (exports) {
 		colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
 		escEncl  ??= colEncl;
 
+		let replEsc = `${escEncl}${colEncl}`;
+
 		let numCols = _maxCols || schema.cols.length;
 
 		let _limit = chunkLimit != null;
@@ -584,6 +586,8 @@ var uDSV = (function (exports) {
 		let v = "";
 		let c;
 
+		let pos0 = pos;
+
 		while (pos <= endPos) {
 			c = csvStr.charCodeAt(pos);
 
@@ -591,6 +595,7 @@ var uDSV = (function (exports) {
 				if (c === colEnclChar) {
 					inCol = 2;
 					pos += 1;
+					pos0 = pos;
 
 					if (pos > endPos)
 						break;
@@ -652,10 +657,14 @@ var uDSV = (function (exports) {
 			}
 
 			if (inCol === 2) {
+				let shouldRep = false;
+				let posTo = 0;
+
 				while (true) {
 					if (c === colEnclChar) {
 						if (colEnclChar === escEnclChar) {
 							if (pos + 1 > endPos) { // TODO: test with chunk ending in closing ", even at EOL but not EOF
+								posTo = pos;
 								pos = endPos + 1;
 								break;
 							}
@@ -666,7 +675,7 @@ var uDSV = (function (exports) {
 								pos += 2;
 
 								// MACRO START
-								v += colEncl;
+								shouldRep = true;
 								if (pos > endPos)
 									break;
 								c = csvStr.charCodeAt(pos);
@@ -674,6 +683,7 @@ var uDSV = (function (exports) {
 							}
 							else {
 								inCol = 0;
+								posTo = pos;
 								pos += 1;
 								break;
 							}
@@ -685,7 +695,7 @@ var uDSV = (function (exports) {
 								pos += 1;
 
 								// MACRO START
-								v += colEncl;
+								shouldRep = true;
 								if (pos > endPos)
 									break;
 								c = csvStr.charCodeAt(pos);
@@ -693,6 +703,7 @@ var uDSV = (function (exports) {
 							}
 							else {
 								inCol = 0;
+								posTo = pos;
 								pos += 1;
 								break;
 							}
@@ -706,10 +717,15 @@ var uDSV = (function (exports) {
 							break;
 						}
 
-						v += csvStr.slice(pos, colEnclChar === escEnclChar ? pos2 : pos2 - 1);
 						pos = pos2;
 						c = colEnclChar;
 					}
+				}
+
+				if (inCol === 0 || pos > endPos) {
+					v = shouldRep ?
+						csvStr.slice(pos0, posTo).replaceAll(replEsc, colEncl) :
+						csvStr.slice(pos0, posTo);
 				}
 			}
 			else if (inCol === 1) {
