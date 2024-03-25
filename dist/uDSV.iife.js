@@ -643,8 +643,6 @@ var uDSV = (function (exports) {
 
 					if (pos > endPos)
 						break;
-
-					c = csvStr.charCodeAt(pos);
 				}
 				else {
 					if (trim && c === spaceChar) {

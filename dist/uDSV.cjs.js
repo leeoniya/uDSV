@@ -642,8 +642,6 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 				if (pos > endPos)
 					break;
-
-				c = csvStr.charCodeAt(pos);
 			}
 			else {
 				if (trim && c === spaceChar) {
