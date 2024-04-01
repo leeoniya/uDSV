@@ -33,7 +33,7 @@
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "papaparse": "^5.4.1",
-    "rollup": "^4.6.1",
+    "rollup": "^4.13.2",
     "rollup-plugin-re": "^1.0.7"
   }
 }
