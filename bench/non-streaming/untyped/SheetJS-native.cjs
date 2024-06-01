@@ -13,5 +13,5 @@ module.exports = {
   // countRows: (data) => data.length,
   // countCols: (data) => data[0].length,
   // getSample: (data) => ['<native object>', '<native object>'],
-  getTypes:  (data) => new Set(data[0].map(c => c.t)),
+  getTypes: (data) => new Set(data[0].map(c => c.t)),
 };
