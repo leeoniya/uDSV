@@ -582,8 +582,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	// 2 = quoted
 	let inCol = 0;
 
-	let v = "";
-	let c;
+	let v = '';
+	let c = 0;
 
 	let pos0 = pos;
 
@@ -614,7 +614,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				colIdx += 1;
 
 				pos += 1;
-				v = "";
+				v = '';
 
 				if (c === rowDelimChar) {
 					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
@@ -739,7 +739,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				colIdx += 1;
 
 				pos += 1;
-				v = "";
+				v = '';
 
 				if (c === rowDelimChar) {
 					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
@@ -771,7 +771,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				if (_probe) {
 					takeToCommaOrEOL.lastIndex = pos;
 					let m = takeToCommaOrEOL.exec(csvStr)[0];
-					v += m;
+					v = m;
 					pos += m.length;  // rowdelim when - 1
 				}
 				else {
@@ -781,7 +781,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						pos2 = endPos + 1;
 
 					let s = csvStr.slice(pos, pos2);
-					v += trim ? s.trim() : s;
+					v = trim ? s.trim() : s;
 					pos = pos2;
 				}
 			}
