@@ -241,6 +241,39 @@ test('unquoted path, omit empty lines', (t) => {
     ]);
 });
 
+test('single column', (t) => {
+    const csvStr = `id\n1`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let cols = parser.stringArrs(csvStr);
+
+    assert.deepEqual(schema, {
+        col: ',',
+        cols: [
+            {
+                name: 'id',
+                repl: {
+                    NaN: undefined,
+                    empty: null,
+                    null: undefined
+                },
+                type: 'n'
+            }
+        ],
+        encl: undefined,
+        esc: undefined,
+        row: '\n',
+        skip: 1,
+        trim: false
+    });
+
+    assert.deepEqual(cols, [
+        ['1'],
+    ]);
+});
+
 test('correctness using Papa as reference', (t) => {
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         let ref = Papa.parse(csvStr).data;

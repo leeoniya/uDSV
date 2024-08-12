@@ -16,7 +16,7 @@ var uDSV = (function (exports) {
 	const pipe  = '|';
 	const semi  = ';';
 
-	const ISO8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2})$/;
+	const ISO8601 = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2}))?$/;
 	const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
 	const COL_DELIMS = [tab, pipe, semi, comma];
@@ -234,7 +234,7 @@ var uDSV = (function (exports) {
 		const firstRowStr   = firstRowMatch[1];
 
 		rowDelim ??= firstRowMatch[2];
-		colDelim ??= COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1) ?? '';
+		colDelim ??= COL_DELIMS.find(delim => firstRowStr.indexOf(delim) > -1) ?? comma;
 
 		const schema = {
 			skip: 1, // how many header rows to skip
@@ -566,7 +566,7 @@ var uDSV = (function (exports) {
 				}
 			}
 
-			if (withEOF && colIdx === lastColIdx)
+			if (withEOF && colIdx === lastColIdx && filledColIdx > -1)
 				--skip < 0 && rows.push(row);
 
 			if (!withEOF || rows.length > 0)
