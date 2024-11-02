@@ -25,23 +25,22 @@ export interface InferSchemaOpts {
 //	omit?,
 }
 
-export const enum SchemaColumnType {
-	String       = 's',
-	Number       = 'n',
-	Date         = 'd',
-	JSON         = 'j',
-	Boolean_1    = 'b:1',
-	Boolean_t    = 'b:t',
-	Boolean_T    = 'b:T',
-	Boolean_true = 'b:true',
-	Boolean_True = 'b:True',
-	Boolean_TRUE = 'b:TRUE',
-	Boolean_y    = 'b:y',
-	Boolean_Y    = 'b:Y',
-	Boolean_yes  = 'b:yes',
-	Boolean_Yes  = 'b:Yes',
-	Boolean_YES  = 'b:YES',
-}
+export type SchemaColumnType = 
+| /** String */ 's'
+| /** Number */ 'n'
+| /** Date */ 'd'
+| /** JSON */ 'j'
+| /** Boolean_1 */ 'b:1'
+| /** Boolean_t */ 'b:t'
+| /** Boolean_T */ 'b:T'
+| /** Boolean_true */ 'b:true'
+| /** Boolean_True */ 'b:True'
+| /** Boolean_TRUE */ 'b:TRUE'
+| /** Boolean_y */ 'b:y'
+| /** Boolean_Y */ 'b:Y'
+| /** Boolean_yes */ 'b:yes'
+| /** Boolean_Yes */ 'b:Yes'
+| /** Boolean_YES */ 'b:YES';
 
 export interface SchemaColumn {
 	/** column name */
