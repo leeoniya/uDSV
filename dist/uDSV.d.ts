@@ -25,7 +25,7 @@ export interface InferSchemaOpts {
 //	omit?,
 }
 
-export type SchemaColumnType = 
+export type SchemaColumnType =
 | /** String */ 's'
 | /** Number */ 'n'
 | /** Date */ 'd'
@@ -95,7 +95,8 @@ export type OnDataFn<T> = (
 
 export type BaseParse<T> = (csvStr: string, onData?: OnDataFn<T>) => T[];
 
-type record = Record<string, unknown>;
+type record    = Record<string, unknown>;
+type stringRec = Record<string, string>;
 
 export interface Parser {
 	/** exposed schema */
@@ -105,6 +106,9 @@ export interface Parser {
 
 	/** parses to string tuples */
 	stringArrs: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[]; // ReturnType<OnDataFn<T>>
+
+	/** parses to string objects */
+	stringObjs: <T extends stringRec = {}>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed tuples */
 	typedArrs:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];

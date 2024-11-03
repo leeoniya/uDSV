@@ -430,6 +430,20 @@ test('typed objs', (t) => {
     ]);
 });
 
+test('string objs', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringObjs(csvStr);
+
+    assert.deepEqual(rows, [
+        {a: '1', b: '2', c: '3'},
+        {a: '4', b: '',  c: '6'}
+    ]);
+});
+
 test('typed cols', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,5,6`;
 

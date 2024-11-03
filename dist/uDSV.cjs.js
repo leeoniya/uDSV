@@ -359,6 +359,7 @@ function initParser(schema, chunkSize) {
 	let _toArrs = null;
 	let _toObjs = null;
 	let _toDeep = null;
+	let _toObjsS = null;
 
 	let _toCols = null;
 
@@ -417,6 +418,19 @@ function initParser(schema, chunkSize) {
 		return _toStrs;
 	});
 
+	const stringObjs = gen(initRows, addRows, () => {
+		_toObjsS ??= genToTypedRows(cols.map(col => ({
+			...col,
+			type: 's',
+			repl: {
+				...col.repl,
+				empty: void 0,
+			}
+		})), true, false);
+
+		return _toObjsS;
+	});
+
 	const typedArrs = gen(initRows, addRows, () => {
 		_toArrs ??= genToTypedRows(cols, false, false);
 		return _toArrs;
@@ -443,6 +457,8 @@ function initParser(schema, chunkSize) {
 		schema,
 
 		stringArrs,
+		stringObjs,
+
 		typedArrs,
 		typedObjs,
 		typedDeep,
