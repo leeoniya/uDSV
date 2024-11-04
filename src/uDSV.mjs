@@ -28,6 +28,23 @@ function boolTrue(v) {
 	);
 }
 
+// inversion function, from b:<type> string (above)
+function boolFalse(v) {
+	let [c0, c1 = ''] = v;
+
+	return (
+		c0 == '1' ? '0' :
+
+		c0 == 't' ? (c1 == '' ? 'f' : 'false') :
+		c0 == 'T' ? (c1 == '' ? 'F' : c1 == 'R' ? 'FALSE' : 'False') :
+
+		c0 == 'y' ? (c1 == '' ? 'n' : 'no') :
+		c0 == 'Y' ? (c1 == '' ? 'N' : c1 == 'E' ? 'NO'  : 'No')  :
+
+		''
+	);
+}
+
 function isJSON(v) {
 	if (v[0] === '[' || v[0] === '{') {
 		try {
@@ -72,6 +89,7 @@ function guessType(ci, rows) {
 }
 
 const toJSON = JSON.stringify;
+const escRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const onlyStrEsc = v => typeof v === 'string' ? toJSON(v) : v;
 
 function getValParseExpr(ci, col) {
@@ -250,6 +268,82 @@ export function inferSchema(csvStr, opts, maxRows) {
 	});
 
 	return schema;
+}
+
+// no stream out support
+// no support for whitespace-padded cols (anti-trim)
+// TODO: allow forcing no enclosures
+function genFromRows(schema, objs = false, deep = false) {
+	let { skip, col, row, encl, esc, cols } = schema;
+
+	let enclTpl = toJSON(encl);
+	let escTpl = toJSON(esc + encl);
+	let strTpl = v => `${enclTpl} + ${v}.replaceAll(${enclTpl}, ${escTpl}) + ${enclTpl}`;
+
+	let bodyTpl = cols.map(({name, type, encl}, ci) => {
+		// TODO: also allow header renaming
+		let val = `r[${objs ? toJSON(name) : ci}]`;
+		let out = val;
+
+		if (type[0] == T_BOOLEAN) {
+			let t = type.slice(2);
+			let f = boolFalse(t);
+			out = t == `${val} ? '${t}' : '${f}'`;
+		}
+		else if (type == T_STRING)
+			out = encl ? strTpl(val) : encl == false ? val : `(!strChk.test(${val}) ? ${val} : ${strTpl(val)})`;
+		else if (type == T_DATE)
+			out = `${val}.toISOString()`;
+		else if (type == T_JSON)
+			out = strTpl(`JSON.stringify(${val})`);
+
+		// nulls will always emit as empty strings
+		return `(${val} == null ? '' : ${out})`;
+	}).join(' + ' + toJSON(col) + ' + ') + ' + ' + toJSON(row);
+
+	// TODO: support skip for headerless?
+	let reStr = `${escRegex(col)}|${escRegex(row)}|${escRegex(encl)}`;
+	let re = new RegExp(reStr);
+	// TODO: also allow header renaming
+	let headStr = cols.map(c => !re.test(c.name) ? c.name : encl + c.name.replaceAll(encl, esc + encl) + encl).join(col) + row;
+
+	return new Function(`
+		let strChk = new RegExp(${toJSON(reStr)});
+
+		return rows => {
+			let out = ${toJSON(headStr)};
+
+			for (let i = 0; i < rows.length; i++) {
+				let r = rows[i];
+				out += ${bodyTpl};
+			}
+
+			return out;
+		}
+	`)();
+};
+
+export function initUnparser(schema) {
+	let _fromArrs = null;
+	let _fromObjs = null;
+	let _fromDeep = null;
+	let _fromCols = null;
+
+	return {
+		schema,
+
+		fromArrs(data) {
+			_fromArrs ??= genFromRows(schema);
+			return _fromArrs(data);
+		},
+		fromObjs(data) {
+			_fromObjs ??= genFromRows(schema, true);
+			return _fromObjs(data);
+		},
+		// TODO
+		fromDeep(data) {},
+		fromCols(data) {},
+	};
 }
 
 export function initParser(schema, chunkSize) {
