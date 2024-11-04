@@ -7,7 +7,7 @@
   "types": "./dist/uDSV.d.ts",
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs",
-    "test": "node ./test/parse.spec.mjs && node ./test/unparse.spec.mjs"
+    "test": "node ./test/parse.spec.mjs"
   },
   "repository": {
     "type": "git",

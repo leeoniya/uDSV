@@ -60,9 +60,6 @@ export interface SchemaColumn {
 		/** 'NaN' strings (only applies when type: number) */
 		NaN: any;    // undefined
 	};
-
-	/** use for unparsing to force enable/disable column enclosure (null = auto) */
-	encl?: null | boolean;
 }
 
 export interface Schema {
