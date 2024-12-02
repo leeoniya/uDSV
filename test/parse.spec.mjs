@@ -416,6 +416,20 @@ test('typed arrs', (t) => {
     ]);
 });
 
+test('typed arrs (from string arrs)', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.typedArrs(parser.stringArrs(csvStr));
+
+    assert.deepEqual(rows, [
+        [1,2,3],
+        [4,5,6],
+    ]);
+});
+
 test('typed objs', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,5,6`;
 
@@ -430,6 +444,20 @@ test('typed objs', (t) => {
     ]);
 });
 
+test('typed objs (from string arrs)', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.typedObjs(parser.stringArrs(csvStr));
+
+    assert.deepEqual(rows, [
+        {a: 1, b: 2, c: 3},
+        {a: 4, b: 5, c: 6}
+    ]);
+});
+
 test('string objs', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,,6\n7,NaN,null`;
 
@@ -437,6 +465,21 @@ test('string objs', (t) => {
     let parser = initParser(schema);
 
     let rows = parser.stringObjs(csvStr);
+
+    assert.deepEqual(rows, [
+        {a: '1', b: '2',   c: '3'   },
+        {a: '4', b: '',    c: '6'   },
+        {a: '7', b: 'NaN', c: 'null'},
+    ]);
+});
+
+test('string objs (from string arrs)', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,,6\n7,NaN,null`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringObjs(parser.stringArrs(csvStr));
 
     assert.deepEqual(rows, [
         {a: '1', b: '2',   c: '3'   },
@@ -460,6 +503,21 @@ test('string cols', (t) => {
     ]);
 });
 
+test('string cols (from string arrs)', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,,6\n7,NaN,null`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringCols(parser.stringArrs(csvStr));
+
+    assert.deepEqual(rows, [
+        ['1', '4', '7'   ],
+        ['2', '',  'NaN' ],
+        ['3', '6', 'null'],
+    ]);
+});
+
 test('typed cols', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,5,6`;
 
@@ -467,6 +525,21 @@ test('typed cols', (t) => {
     let parser = initParser(schema);
 
     let cols = parser.typedCols(csvStr);
+
+    assert.deepEqual(cols, [
+        [1,4],
+        [2,5],
+        [3,6],
+    ]);
+});
+
+test('typed cols (from string arrs)', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,5,6`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let cols = parser.typedCols(parser.stringArrs(csvStr));
 
     assert.deepEqual(cols, [
         [1,4],

@@ -102,25 +102,25 @@ export interface Parser {
 	// readonly buffer:
 
 	/** parses to string tuples */
-	stringArrs: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[]; // ReturnType<OnDataFn<T>>
+	stringArrs: <T extends string[]  = []>(csvStr: string,              onData?: OnDataFn<T>) => T[]; // ReturnType<OnDataFn<T>>
 
 	/** parses to string objects */
-	stringObjs: <T extends stringRec = {}>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	stringObjs: <T extends stringRec = {}>(csvStr: string | string[][], onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed tuples */
-	typedArrs:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	typedArrs:  <T extends unknown[] = []>(csvStr: string | string[][], onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed objects */
-	typedObjs:  <T extends record    = {}>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	typedObjs:  <T extends record    = {}>(csvStr: string | string[][], onData?: OnDataFn<T>) => T[];
 
 	/** parses to nested typed objects (using column names) */
-	typedDeep:  <T extends record    = {}>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	typedDeep:  <T extends record    = {}>(csvStr: string | string[][], onData?: OnDataFn<T>) => T[];
 
 	/** parses to typed columnar arrays */
-	typedCols:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	typedCols:  <T extends unknown[] = []>(csvStr: string | string[][], onData?: OnDataFn<T>) => T[];
 
 	/** parses to string columnar arrays */
-	stringCols: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
+	stringCols: <T extends string[]  = []>(csvStr: string | string[][], onData?: OnDataFn<T>) => T[];
 
 	/**
 	 * starts or continues incremental parsing \

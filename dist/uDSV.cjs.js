@@ -303,17 +303,26 @@ function initParser(schema, chunkSize) {
 			let out = buf;
 			let withEOF = streamState === 0 || streamState === 2;
 
-			let _skip = streamChunkNum === 0 ? skip : 0;
-
-			parse(csvStr, schema, (rows, partial) => {
-				prevUnparsed = partial;
-				let res = cb(convertRows(rows), accAppend);
+			if (Array.isArray(csvStr)) {
+				// TODO: also handle _skip + chunkSize here?
+				let res = cb(convertRows(csvStr), accAppend);
 
 				if (res === false && streamState !== 0)
 					reset();
+			}
+			else {
+				let _skip = streamChunkNum === 0 ? skip : 0;
 
-				return res;
-			}, _skip, withEOF, chunkSize);
+				parse(csvStr, schema, (rows, partial) => {
+					prevUnparsed = partial;
+					let res = cb(convertRows(rows), accAppend);
+
+					if (res === false && streamState !== 0)
+						reset();
+
+					return res;
+				}, _skip, withEOF, chunkSize);
+			}
 
 			if (withEOF)
 				buf = null;
