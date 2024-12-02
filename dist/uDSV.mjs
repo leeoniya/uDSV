@@ -360,11 +360,17 @@ function initParser(schema, chunkSize) {
 		return rows => _toCols(_toArrs(rows));
 	});
 
+	const stringCols = gen(initCols, addCols, () => {
+		_toCols ??= genToCols(cols);
+		return _toCols;
+	});
+
 	return {
 		schema,
 
 		stringArrs,
 		stringObjs,
+		stringCols,
 
 		typedArrs,
 		typedObjs,

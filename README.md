@@ -112,6 +112,7 @@ let typedObjs  = parser.typedObjs(csvStr);  // [ {a: 1, b: 2, c: 3}, {a: 4, b: 5
 let typedCols  = parser.typedCols(csvStr);  // [ [1, 4], [2, 5], [3, 6] ]
 
 let stringObjs = parser.stringObjs(csvStr); // [ {a: '1', b: '2', c: '3'}, {a: '4', b: '5', c: '6'} ]
+let stringCols = parser.typedCols(csvStr);  // [ ['1', '4'], ['2', '5'], ['3', '6'] ]
 ```
 
 Nested/deep objects can be re-constructed from column naming via `.typedDeep()`:

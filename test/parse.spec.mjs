@@ -445,6 +445,21 @@ test('string objs', (t) => {
     ]);
 });
 
+test('string cols', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,,6\n7,NaN,null`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringCols(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1', '4', '7'   ],
+        ['2', '',  'NaN' ],
+        ['3', '6', 'null'],
+    ]);
+});
+
 test('typed cols', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,5,6`;
 

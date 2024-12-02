@@ -119,6 +119,9 @@ export interface Parser {
 	/** parses to typed columnar arrays */
 	typedCols:  <T extends unknown[] = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
 
+	/** parses to string columnar arrays */
+	stringCols: <T extends string[]  = []>(csvStr: string, onData?: OnDataFn<T>) => T[];
+
 	/**
 	 * starts or continues incremental parsing \
 	 * default parse = stringArrs, default onData = accumulator
