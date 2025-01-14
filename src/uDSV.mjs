@@ -275,14 +275,13 @@ export function initParser(schema) {
 	let streamState = 0;
 	let streamParse = null;
 	let streamCb = null;
-	let pendChunk = '';
 	let prevUnparsed = '';
 
 	let buf = null;
 
 	function reset() {
 		streamState = streamChunkNum = 0;
-		prevUnparsed = pendChunk = '';
+		prevUnparsed = '';
 		streamParse = streamCb = buf = null;
 	}
 
@@ -380,17 +379,13 @@ export function initParser(schema) {
 			streamParse ??= parse;
 			streamCb    ??= cb;
 
-			if (streamState === 1) {
-				streamParse(prevUnparsed + pendChunk, streamCb);
-				streamChunkNum++;
-			}
-
-			pendChunk = csvStr;
 			streamState = 1;
+			streamParse(prevUnparsed + csvStr, streamCb);
+			streamChunkNum++;
 		},
 		end() {
 			streamState = 2;
-			let out = streamParse(prevUnparsed + pendChunk, streamCb);
+			let out = streamParse(prevUnparsed, streamCb);
 			reset();
 			return out;
 		},
