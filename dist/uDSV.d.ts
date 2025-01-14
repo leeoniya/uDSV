@@ -147,7 +147,4 @@ export function inferSchema(
 export function initParser(
 	/** inferred or manually defined schema */
 	schema: Schema,
-
-	/** how many parsed items to accumulate for onData (default = 1e3) */
-	chunkSize?: number,
 ): Parser;
