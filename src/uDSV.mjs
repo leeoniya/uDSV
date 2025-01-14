@@ -6,11 +6,16 @@ const semi  = ';';
 const colo  = ':';
 const space = ' ';
 
+function chunkedPush(dest, items, size = 5e4) {
+	for (let i = 0; i < items.length; i += size) {
+		dest.push(...items.slice(i, i + size));
+	}
+}
+
 const ISO8601 = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2}))?$/;
 const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
 const COL_DELIMS = [tab, pipe, semi, comma];
-const CHUNK_SIZE = 1e3;
 
 function boolTrue(v) {
 	let [c0, c1 = ''] = v;
@@ -221,7 +226,10 @@ export function inferSchema(csvStr, opts, maxRows) {
 	const _maxCols = firstRowStr.split(colDelim).length;
 
 	const firstRows = [];
-	parse(csvStr, schema, chunk => { firstRows.push(...chunk); }, 0, true, maxRows, 1, _maxCols);
+	parse(csvStr, schema, 0, row => {
+		firstRows.push(row);
+		return firstRows.length < maxRows;
+	}, true, _maxCols);
 
 	let headerRows = headerFn(firstRows) ?? [];
 
@@ -252,7 +260,7 @@ export function inferSchema(csvStr, opts, maxRows) {
 	return schema;
 }
 
-export function initParser(schema, chunkSize) {
+export function initParser(schema) {
 	let { skip, cols } = schema;
 
 	let _toStrs = null;
@@ -281,8 +289,8 @@ export function initParser(schema, chunkSize) {
 	let accum    = (rows, add) => { add(rows); };
 	let initRows = () => [];
 	let initCols = () => cols.map(c => []);
-	let addRows  = rows => { buf.push(...rows); };
-	let addCols  = cols => { cols.forEach((vals, ci) => { buf[ci].push(...vals); }); };
+	let addRows  = rows => { chunkedPush(buf, rows); };
+	let addCols  = cols => { cols.forEach((vals, ci) => { chunkedPush(buf[ci], vals); }); };
 
 	function gen(accInit, accAppend, genConvertRows) {
 		let convertRows = null;
@@ -294,26 +302,15 @@ export function initParser(schema, chunkSize) {
 			let out = buf;
 			let withEOF = streamState === 0 || streamState === 2;
 
-			if (Array.isArray(csvStr)) {
-				// TODO: also handle _skip + chunkSize here?
-				let res = cb(convertRows(csvStr), accAppend);
+			let _skip = streamChunkNum === 0 ? skip : 0;
 
-				if (res === false && streamState !== 0)
-					reset();
-			}
-			else {
-				let _skip = streamChunkNum === 0 ? skip : 0;
+			let [rows, partial] = Array.isArray(csvStr) ? [csvStr, ''] : parse(csvStr, schema, _skip, undefined, withEOF); // will return false not work here?
 
-				parse(csvStr, schema, (rows, partial) => {
-					prevUnparsed = partial;
-					let res = cb(convertRows(rows), accAppend);
+			prevUnparsed = partial;
+			let res = cb(convertRows(rows), accAppend);
 
-					if (res === false && streamState !== 0)
-						reset();
-
-					return res;
-				}, _skip, withEOF, chunkSize);
-			}
+			if (res === false && streamState !== 0)
+				reset();
 
 			if (withEOF)
 				buf = null;
@@ -400,7 +397,16 @@ export function initParser(schema, chunkSize) {
 	};
 }
 
-function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
+const eachRow = (row, acc) => {
+	acc.push(row);
+	return true;
+};
+
+// todo: allow schema to have col.skip: true
+// limit can be replaced with each() callback to support, it each is defined, does not accumulate, supports search functionality including halt
+// _maxCols is cols estimated by simple delimiter detection and split()
+// returns [rows, unparsed]
+function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCols) {
 	let {
 		row:  rowDelim,
 		col:  colDelim,
@@ -409,16 +415,19 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		trim,
 	} = schema;
 
-	colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
-	escEncl  ??= colEncl;
+	// is this cheap in WebKit/Mozilla, would simplify exit conditions
+	// if (withEOF && !csvStr.endsWith(rowDelim))
+	// 	csvStr += rowDelim;
+
+	colEncl ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
+	escEncl ??= colEncl;
 
 	let replEsc = `${escEncl}${colEncl}`;
 
-	let numCols = _maxCols || schema.cols.length;
+	let numCols = _maxCols ?? schema.cols.length;
 
-	let _limit = chunkLimit != null;
 	// uses a slower regexp path for schema probing
-	let _probe = _maxCols != null && _limit;
+	let _probe = _maxCols != null;
 
 	let rowDelimLen = rowDelim.length;
 	let colDelimLen = colDelim.length;
@@ -428,8 +437,6 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	let rowDelimChar = rowDelim.charCodeAt(0);
 	let colDelimChar = colDelim.charCodeAt(0);
 	let spaceChar    = 32;
-
-	let numChunks = 0;
 
 	let pos = 0;
 	let endPos = csvStr.length - 1;
@@ -458,14 +465,11 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				let s = csvStr.slice(pos, pos2);
 				row[colIdx] = trim ? s.trim() : s;
 
-				--skip < 0 && rows.push(row);
-
-				if (rows.length === chunkSize) {
-					let stop = cb(rows, '') === false;
-					rows = [];
-
-					if (stop || _limit && ++numChunks === chunkLimit)
-						return;
+				if (--skip < 0) {
+					if (each(row, rows) === false) {
+						// if caller indicates an early exit, we dont return the unparsed tail
+						return [rows, ''];
+					}
 				}
 
 				row = rowTpl.slice();
@@ -496,13 +500,10 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 			}
 		}
 
-		if (withEOF && colIdx === lastColIdx && filledColIdx > -1)
-			--skip < 0 && rows.push(row);
+		if (--skip < 0 && withEOF && colIdx === lastColIdx && filledColIdx > -1)
+			each(row, rows);
 
-		if (!withEOF || rows.length > 0)
-			cb(rows, !withEOF ? csvStr.slice(linePos) : '');
-
-		return;
+		return [rows, !withEOF ? csvStr.slice(linePos) : ''];
 	}
 
 	// should this be * to handle ,, ?
@@ -553,14 +554,11 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						lastColIdx = filledColIdx;
 					}
 
-					--skip < 0 && rows.push(row);
-
-					if (rows.length === chunkSize) {
-						let stop = cb(rows, '') === false;
-						rows = [];
-
-						if (stop || _limit && ++numChunks === chunkLimit)
-							return;
+					if (--skip < 0) {
+						if (each(row, rows) === false) {
+							// if caller indicates an early exit, we dont return the unparsed tail
+							return [rows, ''];
+						}
 					}
 
 					row = rowTpl.slice();
@@ -678,14 +676,11 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 						lastColIdx = filledColIdx;
 					}
 
-					--skip < 0 && rows.push(row);
-
-					if (rows.length === chunkSize) {
-						let stop = cb(rows, '') === false;
-						rows = [];
-
-						if (stop || _limit && ++numChunks === chunkLimit)
-							return;
+					if (--skip < 0) {
+						if (each(row, rows) === false) {
+							// if caller indicates an early exit, we dont return the unparsed tail
+							return [rows, ''];
+						}
 					}
 
 					row = rowTpl.slice();
@@ -721,7 +716,10 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 	if (withEOF && colIdx === lastColIdx) {
 		row[colIdx] = v;
-		--skip < 0 && rows.push(row);
+
+		if (--skip < 0)
+			each(row, rows);
+
 		inCol = 0;
 	}
 
@@ -733,7 +731,7 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		)
 	);
 
-	cb(rows, partial ? csvStr.slice(linePos) : '');
+	return [rows, partial ? csvStr.slice(linePos) : ''];
 }
 
 // const parsed = {
