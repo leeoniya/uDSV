@@ -1,13 +1,16 @@
-const transform = (value, x, y, quoted) => {
-  if (value === '' || value === 'null' || value === 'NULL')
+const infer = (value, isExplicitlyQuoted) => {
+  if (value[0] === '{' || value[0] === '[')
+    return JSON.parse(value);
+
+  if (isExplicitlyQuoted)
+    return value;
+
+  if (value === '')
     return null;
   if (value === 'FALSE')
     return false;
   if (value === 'TRUE')
     return true;
-
-  if (value[0] === '{' || value[0] === '[')
-    return JSON.parse(value);
 
   let asNum = +value;
 
@@ -24,7 +27,7 @@ module.exports = {
     const { default: parse } = await import('csv-simple-parser');
 
     return (csvStr, path) => new Promise(res => {
-      let rows = parse(csvStr, { header: true, transform });
+      let rows = parse(csvStr, { header: true, infer });
       res(rows);
     });
   },
