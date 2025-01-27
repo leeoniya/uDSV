@@ -1,5 +1,5 @@
 const transform = (value, x, y, quoted) => {
-  if (value === '')
+  if (value === '' || value === 'null' || value === 'NULL')
     return null;
   if (value === 'FALSE')
     return false;
@@ -24,7 +24,7 @@ module.exports = {
     const { default: parse } = await import('csv-simple-parser');
 
     return (csvStr, path) => new Promise(res => {
-      let rows = parse(csvStr, { infer: true, header: true, transform });
+      let rows = parse(csvStr, { header: true, transform });
       res(rows);
     });
   },
