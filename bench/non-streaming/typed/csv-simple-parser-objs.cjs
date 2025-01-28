@@ -1,11 +1,10 @@
-const transform = (value, x, y, quoted) => {
+const infer = value => {
   if (value === '')
     return null;
   if (value === 'FALSE')
     return false;
   if (value === 'TRUE')
     return true;
-
   if (value[0] === '{' || value[0] === '[')
     return JSON.parse(value);
 
@@ -24,7 +23,7 @@ module.exports = {
     const { default: parse } = await import('csv-simple-parser');
 
     return (csvStr, path) => new Promise(res => {
-      let rows = parse(csvStr, { infer: true, header: true, transform });
+      let rows = parse(csvStr, { header: true, infer });
       res(rows);
     });
   },
