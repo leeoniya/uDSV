@@ -1,12 +1,12 @@
 const infer = (value, isExplicitlyQuoted) => {
-  if (value[0] === '{' || value[0] === '[')
-    return JSON.parse(value);
   if (value === '')
     return null;
   if (value === 'FALSE')
     return false;
   if (value === 'TRUE')
     return true;
+  if (value[0] === '{' || value[0] === '[')
+    return JSON.parse(value);
 
   let asNum = +value;
 
