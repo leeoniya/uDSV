@@ -1,4 +1,4 @@
-const infer = (value, isExplicitlyQuoted) => {
+const infer = value => {
   if (value === '')
     return null;
   if (value === 'FALSE')
