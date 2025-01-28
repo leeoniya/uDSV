@@ -1,10 +1,6 @@
 const infer = (value, isExplicitlyQuoted) => {
   if (value[0] === '{' || value[0] === '[')
     return JSON.parse(value);
-
-  if (isExplicitlyQuoted)
-    return value;
-
   if (value === '')
     return null;
   if (value === 'FALSE')
