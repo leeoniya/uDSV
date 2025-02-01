@@ -600,11 +600,11 @@ test('typed objs (deep .0)', (t) => {
       }]);
 });
 
-test('variable size chunks (incremental/streaming)', async (t) => {
-    function chunkString(str, len) {
-        return str.match(new RegExp(`.{1,${len}}`, 'gms'));
-    }
+function chunkString(str, len) {
+    return str.match(new RegExp(`.{1,${len}}`, 'gms'));
+}
 
+test('variable size chunks (incremental/streaming)', async (t) => {
     for (const csvStr of [rfc4180, sensorData, earthquakes, housingPriceIndex, uszips, airports]) {
         // reference non-iterative parse
         let schema  = inferSchema(csvStr);
@@ -645,11 +645,7 @@ test('variable size chunks (incremental/streaming)', async (t) => {
     }
 });
 
-test('chunk boundary between \\r and \\n ', async (t) => {
-    function chunkString(str, len) {
-        return str.match(new RegExp(`.{1,${len}}`, 'gms'));
-    }
-
+test('chunk boundary between \\r and \\n', async (t) => {
     const csvStr = 'a,b,c\r\n1,2,3\r\n4,5,6'
 
     let schema  = inferSchema(csvStr);
@@ -678,6 +674,110 @@ test('chunk boundary between \\r and \\n ', async (t) => {
         let rowsIncr = parser2.end();
         assert.deepEqual(rowsIncr, rows);
     });
+});
+
+test.skip('chunk should return parsed rows', async (t) => {
+    const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
+
+    let schema  = inferSchema(csvStr);
+    schema.skip = 0;
+    let parser = initParser(schema);
+    let rows = parser.stringArrs(csvStr);
+
+    let chunkSizes = [8];
+
+    chunkSizes.forEach(chunkSize => {
+        let chunks = chunkString(csvStr, chunkSize);
+
+        let schema2 = null;
+        let parser2 = null;
+
+        chunks.forEach(chunk => {
+            if (parser2 == null) {
+                schema2 = inferSchema(chunk);
+                schema2.skip = 0;
+                parser2 = initParser(schema2);
+            }
+
+            const rows = parser2.chunk(chunk, parser2.stringArrs);
+            console.log(rows);
+        });
+
+        let rowsIncr = parser2.end();
+        assert.deepEqual(rowsIncr, rows);
+    });
+});
+
+test.skip('chunk stringArrs should call back each row', async (t) => {
+    const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
+
+    let schema  = inferSchema(csvStr);
+    schema.skip = 0;
+    let parser = initParser(schema);
+    let rows = parser.stringArrs(csvStr);
+
+    let chunkSizes = [8];
+
+    chunkSizes.forEach(chunkSize => {
+        let chunks = chunkString(csvStr, chunkSize);
+
+        let schema2 = null;
+        let parser2 = null;
+
+        chunks.forEach(chunk => {
+            if (parser2 == null) {
+                schema2 = inferSchema(chunk);
+                schema2.skip = 0;
+                parser2 = initParser(schema2);
+            }
+
+            parser2.chunk(chunk, parser2.stringArrs);
+        });
+
+        let rowsIncr = parser2.end();
+        assert.deepEqual(rowsIncr, rows);
+    });
+});
+
+test.skip('chunk() api should not be subject to chunkSize threshold for invoking callback', async (t) => {
+    const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
+
+    let schema  = inferSchema(csvStr);
+    // schema.skip = 0;
+    let parser = initParser(schema);
+
+    let chunk0 = csvStr.slice(0, 39);
+    let chunk1 = csvStr.slice(39);
+
+    parser.chunk(chunk0, parser.stringArrs, (rows) => {
+        console.log(rows);
+    });
+
+    // parser.chunk(chunk1, parser.stringArrs, (rows) => {
+    //     console.log(rows);
+    // });
+
+    // let rows = parser.end();
+
+    // chunkSizes.forEach(chunkSize => {
+    //     let chunks = chunkString(csvStr, chunkSize);
+
+    //     let schema2 = null;
+    //     let parser2 = null;
+
+    //     chunks.forEach(chunk => {
+    //         if (parser2 == null) {
+    //             schema2 = inferSchema(chunk);
+    //             schema2.skip = 0;
+    //             parser2 = initParser(schema2);
+    //         }
+
+    //         parser2.chunk(chunk, parser2.stringArrs);
+    //     });
+
+    //     let rowsIncr = parser2.end();
+    //     assert.deepEqual(rowsIncr, rows);
+    // });
 });
 
 test('string/number/bool/date/json', (t) => {
