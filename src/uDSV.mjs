@@ -102,7 +102,7 @@ function getValParseExpr(ci, col) {
 
 const segsRe = /\w+(?:\[|\]?[\.\[]?|$)/gm;
 
-function genToTypedRows(cols, objs = false, deep = false) {
+function genToTypedRow(cols, objs = false, deep = false) {
 	let buf = '';
 
 	if (objs && deep) {
@@ -154,24 +154,13 @@ function genToTypedRows(cols, objs = false, deep = false) {
 		}
 	}
 
-	let fnBody = `
-		let arr = Array(rows.length);
+	return new Function('r', `return ${buf}`);
+}
 
-		for (let i = 0; i < rows.length; i++) {
-			let r = rows[i];
-			arr[i] = ${buf};
-		}
-
-		return arr;
-	`;
-
-	let toObjFn = new Function('rows', fnBody);
-
-	// console.log(fnBody);
-	// console.log(toObjFn(chunk.slice(1, 5)));
-	// process.exit();
-
-	return toObjFn;
+function genToTypedRows(cols, objs = false, deep = false) {
+	let toTypedRow = genToTypedRow(cols, objs, deep);
+	let toTypedRows = rows => rows.map(toTypedRow);
+	return toTypedRows;
 }
 
 function genToCols(cols) {
@@ -303,7 +292,11 @@ export function initParser(schema) {
 
 			let _skip = streamChunkNum === 0 ? skip : 0;
 
-			let [rows, partial] = Array.isArray(csvStr) ? [csvStr, ''] : parse(csvStr, schema, _skip, undefined, withEOF); // will return false not work here?
+			let rows    = Array.isArray(csvStr) ? csvStr : [];
+			let partial = Array.isArray(csvStr) ? '' : parse(csvStr, schema, _skip, row => {
+				rows.push(row);
+				return true; // todo cb()
+			}, withEOF); // will return false not work here?
 
 			prevUnparsed = partial;
 			let res = cb(convertRows(rows), accAppend);
@@ -437,7 +430,6 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 	let endPos = csvStr.length - 1;
 	let linePos = 0;
 
-	let rows = [];
 	let rowTpl = Array(numCols).fill('');
 	let row = rowTpl.slice();
 
@@ -461,9 +453,9 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 				row[colIdx] = trim ? s.trim() : s;
 
 				if (--skip < 0) {
-					if (each(row, rows) === false) {
+					if (each(row) === false) {
 						// if caller indicates an early exit, we dont return the unparsed tail
-						return [rows, ''];
+						return '';
 					}
 				}
 
@@ -496,9 +488,9 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 		}
 
 		if (--skip < 0 && withEOF && colIdx === lastColIdx && filledColIdx > -1)
-			each(row, rows);
+			each(row);
 
-		return [rows, !withEOF ? csvStr.slice(linePos) : ''];
+		return !withEOF ? csvStr.slice(linePos) : '';
 	}
 
 	// should this be * to handle ,, ?
@@ -544,15 +536,15 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 				v = '';
 
 				if (c === rowDelimChar) {
-					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
+					if (_probe && filledColIdx < lastColIdx && linePos === 0) {
 						row.length = rowTpl.length = filledColIdx + 1;
 						lastColIdx = filledColIdx;
 					}
 
 					if (--skip < 0) {
-						if (each(row, rows) === false) {
+						if (each(row) === false) {
 							// if caller indicates an early exit, we dont return the unparsed tail
-							return [rows, ''];
+							return '';
 						}
 					}
 
@@ -666,15 +658,15 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 				v = '';
 
 				if (c === rowDelimChar) {
-					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
+					if (_probe && filledColIdx < lastColIdx && linePos === 0) {
 						row.length = rowTpl.length = filledColIdx + 1;
 						lastColIdx = filledColIdx;
 					}
 
 					if (--skip < 0) {
-						if (each(row, rows) === false) {
+						if (each(row) === false) {
 							// if caller indicates an early exit, we dont return the unparsed tail
-							return [rows, ''];
+							return '';
 						}
 					}
 
@@ -713,7 +705,7 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 		row[colIdx] = v;
 
 		if (--skip < 0)
-			each(row, rows);
+			each(row);
 
 		inCol = 0;
 	}
@@ -726,7 +718,7 @@ function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCol
 		)
 	);
 
-	return [rows, partial ? csvStr.slice(linePos) : ''];
+	return partial ? csvStr.slice(linePos) : '';
 }
 
 // const parsed = {
