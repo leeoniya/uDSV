@@ -32,8 +32,8 @@
   "homepage": "https://github.com/leeoniya/uDSV#readme",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
-    "papaparse": "^5.5.1",
-    "rollup": "^4.30.1",
+    "papaparse": "^5.5.2",
+    "rollup": "^4.34.3",
     "rollup-plugin-re": "^1.0.7"
   }
 }

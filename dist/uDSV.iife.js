@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2024, Leon Sorokin
+* Copyright (c) 2025, Leon Sorokin
 * All rights reserved. (MIT Licensed)
 *
 * uDSV.js
@@ -98,9 +98,9 @@ var uDSV = (function (exports) {
 
 		let { repl } = col;
 
-		let nanExpr   = repl.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${onlyStrEsc(repl.NaN)} : `                       : '';
-		let nullExpr  = repl.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${onlyStrEsc(repl.null)} : ` : '';
-		let emptyExpr = repl.empty !== void 0                      ? `${rv} === '' ? ${onlyStrEsc(repl.empty)} : `                        : '';
+		let nanExpr   = repl.NaN   !== undefined && type === T_NUMBER ? `${rv} === 'NaN' ? ${onlyStrEsc(repl.NaN)} : `                       : '';
+		let nullExpr  = repl.null  !== undefined                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${onlyStrEsc(repl.null)} : ` : '';
+		let emptyExpr = repl.empty !== undefined                      ? `${rv} === '' ? ${onlyStrEsc(repl.empty)} : `                        : '';
 
 		return `${emptyExpr} ${nullExpr} ${nanExpr} ${parseExpr}`;
 	}
@@ -251,8 +251,8 @@ var uDSV = (function (exports) {
 				// this could be type-dependant (e.g. {empty: 0, null: 0, NaN: NaN} for numbers)
 				repl: {
 					empty: null,
-					NaN: void 0,
-					null: void 0,
+					NaN: undefined,
+					null: undefined,
 				},
 			};
 
@@ -343,7 +343,7 @@ var uDSV = (function (exports) {
 				type: 's',
 				repl: {
 					...col.repl,
-					empty: void 0,
+					empty: undefined,
 				}
 			})), true, false);
 
