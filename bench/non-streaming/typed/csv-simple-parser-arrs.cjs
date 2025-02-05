@@ -1,4 +1,4 @@
-const transform = (value, x, y, quoted) => {
+const infer = value => {
   if (value === '')
     return null;
   if (value === 'FALSE')
@@ -24,7 +24,7 @@ module.exports = {
     const { default: parse } = await import('csv-simple-parser');
 
     return (csvStr, path) => new Promise(res => {
-      let rows = parse(csvStr, { infer: true, transform });
+      let rows = parse(csvStr, { infer });
       // console.log(rows[0], rows[1]);
       // process.exit();
       res(rows);
