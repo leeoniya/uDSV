@@ -373,9 +373,8 @@ export function initParser(schema) {
 }
 
 // todo: allow schema to have col.skip: true
-// limit can be replaced with each() callback to support, it each is defined, does not accumulate, supports search functionality including halt
 // _maxCols is cols estimated by simple delimiter detection and split()
-// returns [rows, unparsed]
+// returns unparsed tail
 function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _maxCols) {
 	let {
 		row:  rowDelim,
