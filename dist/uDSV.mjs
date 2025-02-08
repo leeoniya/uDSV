@@ -253,16 +253,15 @@ function initParser(schema) {
 		streamParse = streamCb = buf = null;
 	}
 
-	let accum    = (row, buf, add) => { add(buf, row); return true; };
-	let initRows = () => [];
-	let initCols = () => cols.map(c => []);
-	let addRow  = (buf, row) => {
-		buf.push(row);
+	let accum    = (row, buf, add) => {
+		add(buf, row);
 		return true;
 	};
+	let initRows = () => [];
+	let initCols = () => cols.map(c => []);
+	let addRow  = (buf, row) => { buf.push(row); };
 	let addCol  = new Function('buf', 'row', `
 		${schema.cols.map((c, i) => 'buf[' + i + '].push(row[' + i + '])').join(';')};
-		return true;
 	`);
 
 	function gen(accInit, accAppend, genConvertRow) {
@@ -277,7 +276,7 @@ function initParser(schema) {
 			let out = buf;
 			let withEOF = streamState === 0 || streamState === 2;
 
-			let earlyExit = false;
+			let halted = false;
 
 			if (Array.isArray(csvStr)) {
 				for (let i = 0; i < csvStr.length; i++) {
@@ -285,22 +284,15 @@ function initParser(schema) {
 					let res = cb(convertRow(row), out, accAppend);
 
 					if (res === false) {
-						earlyExit = true;
+						halted = true;
 						break;
 					}
 				}
-			} else {
-				prevUnparsed = parse(csvStr, schema, _skip, row => {
-					let res = cb(convertRow(row), out, accAppend);
-
-					if (res === false)
-						earlyExit = true;
-
-					return res;
-				}, withEOF);
 			}
+			else
+				[prevUnparsed, halted] = parse(csvStr, schema, _skip, row => cb(convertRow(row), out, accAppend), withEOF);
 
-			if (earlyExit && streamState !== 0)
+			if (halted && streamState !== 0)
 				reset();
 
 			if (withEOF)
@@ -380,7 +372,7 @@ function initParser(schema) {
 
 // todo: allow schema to have col.skip: true
 // _maxCols is cols estimated by simple delimiter detection and split()
-// returns unparsed tail
+// returns [unparsed tail, shouldHalt]
 function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _maxCols) {
 	let {
 		row:  rowDelim,
@@ -413,6 +405,8 @@ function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _max
 	let colDelimChar = colDelim.charCodeAt(0);
 	let spaceChar    = 32;
 
+	let out = ['', false];
+
 	let pos = 0;
 	let endPos = csvStr.length - 1;
 	let linePos = 0;
@@ -442,7 +436,8 @@ function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _max
 				if (--skip < 0) {
 					if (each(row) === false) {
 						// if caller indicates an early exit, we dont return the unparsed tail
-						return '';
+						out[1] = true;
+						return out;
 					}
 				}
 
@@ -477,7 +472,8 @@ function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _max
 		if (--skip < 0 && withEOF && colIdx === lastColIdx && filledColIdx > -1)
 			each(row);
 
-		return !withEOF ? csvStr.slice(linePos) : '';
+		out[0] = !withEOF ? csvStr.slice(linePos) : '';
+		return out;
 	}
 
 	// should this be * to handle ,, ?
@@ -531,7 +527,8 @@ function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _max
 					if (--skip < 0) {
 						if (each(row) === false) {
 							// if caller indicates an early exit, we dont return the unparsed tail
-							return '';
+							out[1] = true;
+							return out;
 						}
 					}
 
@@ -653,7 +650,8 @@ function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _max
 					if (--skip < 0) {
 						if (each(row) === false) {
 							// if caller indicates an early exit, we dont return the unparsed tail
-							return '';
+							out[1] = true;
+							return out;
 						}
 					}
 
@@ -705,7 +703,8 @@ function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _max
 		)
 	);
 
-	return partial ? csvStr.slice(linePos) : '';
+	out[0] = partial ? csvStr.slice(linePos) : '';
+	return out;
 }
 
 // const parsed = {
