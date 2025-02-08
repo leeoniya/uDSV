@@ -6,12 +6,6 @@ const semi  = ';';
 const colo  = ':';
 const space = ' ';
 
-function chunkedPush(dest, items, size = 5e4) {
-	for (let i = 0; i < items.length; i += size) {
-		dest.push(...items.slice(i, i + size));
-	}
-}
-
 const ISO8601 = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d{2}:?\d{2}))?$/;
 const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
@@ -157,25 +151,6 @@ function genToTypedRow(cols, objs = false, deep = false) {
 	return new Function('r', `return ${buf}`);
 }
 
-function genToTypedRows(cols, objs = false, deep = false) {
-	let toTypedRow = genToTypedRow(cols, objs, deep);
-	let toTypedRows = rows => rows.map(toTypedRow);
-	return toTypedRows;
-}
-
-function genToCols(cols) {
-	return new Function('rows', `
-		let cols = [${cols.map(() => `Array(rows.length)`).join(',')}];
-
-		for (let i = 0; i < rows.length; i++) {
-			let r = rows[i];
-			${cols.map((c, i) => `cols[${i}][i] = r[${i}]`).join(';')};
-		}
-
-		return cols;
-	`);
-}
-
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
 export function inferSchema(csvStr, opts, maxRows) {
 	let {
@@ -252,15 +227,12 @@ export function inferSchema(csvStr, opts, maxRows) {
 export function initParser(schema) {
 	let { skip, cols } = schema;
 
-	let _toStrs = null;
-	let _toArrs = null;
-	let _toObjs = null;
+	let _toStr = null;
+	let _toArr = null;
+	let _toObj = null;
 	let _toDeep = null;
-	let _toObjsS = null;
+	let _toObjS = null;
 
-	let _toCols = null;
-
-	let streamChunkNum = 0;
 	let streamState = 0;
 	let streamParse = null;
 	let streamCb = null;
@@ -269,39 +241,59 @@ export function initParser(schema) {
 	let buf = null;
 
 	function reset() {
-		streamState = streamChunkNum = 0;
+		streamState = 0;
 		prevUnparsed = '';
 		streamParse = streamCb = buf = null;
 	}
 
-	let accum    = (rows, add) => { add(rows); };
+	let accum    = (row, buf, add) => { add(buf, row); return true; };
 	let initRows = () => [];
 	let initCols = () => cols.map(c => []);
-	let addRows  = rows => { chunkedPush(buf, rows); };
-	let addCols  = cols => { cols.forEach((vals, ci) => { chunkedPush(buf[ci], vals); }); };
+	let addRow  = (buf, row) => {
+		buf.push(row);
+		return true;
+	};
+	let addCol  = new Function('buf', 'row', `
+		${schema.cols.map((c, i) => 'buf[' + i + '].push(row[' + i + '])').join(';')};
+		return true;
+	`);
 
-	function gen(accInit, accAppend, genConvertRows) {
-		let convertRows = null;
+	function gen(accInit, accAppend, genConvertRow) {
+		let convertRow = null;
 
 		return (csvStr, cb = accum) => {
-			convertRows ??= genConvertRows();
+			convertRow ??= genConvertRow();
+
+			let _skip = buf == null ? skip : 0;
 
 			buf ??= accInit();
 			let out = buf;
 			let withEOF = streamState === 0 || streamState === 2;
 
-			let _skip = streamChunkNum === 0 ? skip : 0;
+			let earlyExit = false;
 
-			let rows    = Array.isArray(csvStr) ? csvStr : [];
-			let partial = Array.isArray(csvStr) ? '' : parse(csvStr, schema, _skip, row => {
-				rows.push(row);
-				return true; // todo cb()
-			}, withEOF); // will return false not work here?
+			if (Array.isArray(csvStr)) {
+				for (let i = 0; i < csvStr.length; i++) {
+					let row = csvStr[i];
+					let res = cb(convertRow(row), out, accAppend);
 
-			prevUnparsed = partial;
-			let res = cb(convertRows(rows), accAppend);
+					if (res === false) {
+						earlyExit = true;
+						break;
+					}
+				}
+			} else {
+				prevUnparsed = parse(csvStr, schema, _skip, row => {
+					let res = cb(convertRow(row), out, accAppend);
 
-			if (res === false && streamState !== 0)
+					if (res === false)
+						earlyExit = true;
+
+					return res;
+				}, withEOF);
+			}
+
+			if (earlyExit && streamState !== 0)
 				reset();
 
 			if (withEOF)
@@ -311,13 +303,20 @@ export function initParser(schema) {
 		};
 	}
 
-	const stringArrs = gen(initRows, addRows, () => {
-		_toStrs ??= rows => rows;
-		return _toStrs;
-	});
+	const _toStrGen = () => {
+		_toStr ??= row => row;
+		return _toStr;;
+	};
 
-	const stringObjs = gen(initRows, addRows, () => {
-		_toObjsS ??= genToTypedRows(cols.map(col => ({
+	const _toArrGen = () => {
+		_toArr ??= genToTypedRow(cols, false, false);
+		return _toArr;
+	};
+
+	const stringArrs = gen(initRows, addRow, _toStrGen);
+
+	const stringObjs = gen(initRows, addRow, () => {
+		_toObjS ??= genToTypedRow(cols.map(col => ({
 			...col,
 			type: 's',
 			repl: {
@@ -326,35 +325,24 @@ export function initParser(schema) {
 			}
 		})), true, false);
 
-		return _toObjsS;
+		return _toObjS;
 	});
 
-	const typedArrs = gen(initRows, addRows, () => {
-		_toArrs ??= genToTypedRows(cols, false, false);
-		return _toArrs;
+	const typedArrs = gen(initRows, addRow, _toArrGen);
+
+	const typedObjs = gen(initRows, addRow, () => {
+		_toObj ??= genToTypedRow(cols, true, false);
+		return _toObj;
 	});
 
-	const typedObjs = gen(initRows, addRows, () => {
-		_toObjs ??= genToTypedRows(cols, true, false);
-		return _toObjs;
-	});
-
-	const typedDeep = gen(initRows, addRows, () => {
-		_toDeep ??= genToTypedRows(cols, true, true);
+	const typedDeep = gen(initRows, addRow, () => {
+		_toDeep ??= genToTypedRow(cols, true, true);
 		return _toDeep;
 	});
 
-	const typedCols = gen(initCols, addCols, () => {
-		_toArrs ??= genToTypedRows(cols, false, false);
-		_toCols ??= genToCols(cols);
+	const typedCols = gen(initCols, addCol, _toArrGen);
 
-		return rows => _toCols(_toArrs(rows));
-	});
-
-	const stringCols = gen(initCols, addCols, () => {
-		_toCols ??= genToCols(cols);
-		return _toCols;
-	});
+	const stringCols = gen(initCols, addCol, _toStrGen);
 
 	return {
 		schema,
@@ -374,7 +362,6 @@ export function initParser(schema) {
 
 			streamState = 1;
 			streamParse(prevUnparsed + csvStr, streamCb);
-			streamChunkNum++;
 		},
 		end() {
 			streamState = 2;
@@ -385,16 +372,11 @@ export function initParser(schema) {
 	};
 }
 
-const eachRow = (row, acc) => {
-	acc.push(row);
-	return true;
-};
-
 // todo: allow schema to have col.skip: true
 // limit can be replaced with each() callback to support, it each is defined, does not accumulate, supports search functionality including halt
 // _maxCols is cols estimated by simple delimiter detection and split()
 // returns [rows, unparsed]
-function parse(csvStr, schema, skip = 0, each = eachRow, withEOF = true, _maxCols) {
+function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _maxCols) {
 	let {
 		row:  rowDelim,
 		col:  colDelim,
