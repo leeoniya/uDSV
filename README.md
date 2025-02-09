@@ -210,8 +210,9 @@ To bypass this auto-accumulation behavior, simply pass your own handler as the t
 
 let sum = 0;
 
+// sums fourth column
 let reducer = (row) => {
-  sum += rows[i][3]; // sum fourth column
+  sum += row[3];
 };
 
 for await (const strChunk of textStream) {
