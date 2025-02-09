@@ -202,7 +202,7 @@ let result = parser.end();
 ```
 
 The above examples show accumulating parsers -- they will buffer the full `result` into memory.
-This may not be something you want (or need), for example with huge datasets where you're looking to get the sum of a single column, or want to filter only a small subset of rows.
+This may not be something you need (or want), for example with huge datasets where you're looking to get the sum of a single column, or want to filter only a small subset of rows.
 To bypass this auto-accumulation behavior, simply pass your own handler as the third argument to `parser.chunk()`:
 
 ```js
@@ -210,10 +210,8 @@ To bypass this auto-accumulation behavior, simply pass your own handler as the t
 
 let sum = 0;
 
-let reducer = (rows) => {
-  for (let i = 0; i < rows.length; i++) {
-    sum += rows[i][3]; // sum fourth column
-  }
+let reducer = (row) => {
+  sum += rows[i][3]; // sum fourth column
 };
 
 for await (const strChunk of textStream) {

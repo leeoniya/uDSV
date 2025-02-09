@@ -19,7 +19,6 @@ const ISO8601 = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3,})?(?:Z|[-+]\d
 const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
 const COL_DELIMS = [tab, pipe, semi, comma];
-const CHUNK_SIZE = 1e3;
 
 function boolTrue(v) {
 	let [c0, c1 = ''] = v;
@@ -97,16 +96,16 @@ function getValParseExpr(ci, col) {
 
 	let { repl } = col;
 
-	let nanExpr   = repl.NaN   !== undefined && type === T_NUMBER ? `${rv} === 'NaN' ? ${onlyStrEsc(repl.NaN)} : `                       : '';
-	let nullExpr  = repl.null  !== undefined                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${onlyStrEsc(repl.null)} : ` : '';
-	let emptyExpr = repl.empty !== undefined                      ? `${rv} === '' ? ${onlyStrEsc(repl.empty)} : `                        : '';
+	let nanExpr   = repl.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${onlyStrEsc(repl.NaN)} : `                       : '';
+	let nullExpr  = repl.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${onlyStrEsc(repl.null)} : ` : '';
+	let emptyExpr = repl.empty !== void 0                      ? `${rv} === '' ? ${onlyStrEsc(repl.empty)} : `                        : '';
 
 	return `${emptyExpr} ${nullExpr} ${nanExpr} ${parseExpr}`;
 }
 
 const segsRe = /\w+(?:\[|\]?[\.\[]?|$)/gm;
 
-function genToTypedRows(cols, objs = false, deep = false) {
+function genToTypedRow(cols, objs = false, deep = false) {
 	let buf = '';
 
 	if (objs && deep) {
@@ -158,37 +157,7 @@ function genToTypedRows(cols, objs = false, deep = false) {
 		}
 	}
 
-	let fnBody = `
-		let arr = Array(rows.length);
-
-		for (let i = 0; i < rows.length; i++) {
-			let r = rows[i];
-			arr[i] = ${buf};
-		}
-
-		return arr;
-	`;
-
-	let toObjFn = new Function('rows', fnBody);
-
-	// console.log(fnBody);
-	// console.log(toObjFn(chunk.slice(1, 5)));
-	// process.exit();
-
-	return toObjFn;
-}
-
-function genToCols(cols) {
-	return new Function('rows', `
-		let cols = [${cols.map(() => `Array(rows.length)`).join(',')}];
-
-		for (let i = 0; i < rows.length; i++) {
-			let r = rows[i];
-			${cols.map((c, i) => `cols[${i}][i] = r[${i}]`).join(';')};
-		}
-
-		return cols;
-	`);
+	return new Function('r', `return ${buf}`);
 }
 
 // https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
@@ -230,7 +199,10 @@ function inferSchema(csvStr, opts, maxRows) {
 	const _maxCols = firstRowStr.split(colDelim).length;
 
 	const firstRows = [];
-	parse(csvStr, schema, chunk => { firstRows.push(...chunk); }, 0, true, maxRows, 1, _maxCols);
+	parse(csvStr, schema, 0, row => {
+		firstRows.push(row);
+		return firstRows.length < maxRows;
+	}, true, _maxCols);
 
 	let headerRows = headerFn(firstRows) ?? [];
 
@@ -250,8 +222,8 @@ function inferSchema(csvStr, opts, maxRows) {
 			// this could be type-dependant (e.g. {empty: 0, null: 0, NaN: NaN} for numbers)
 			repl: {
 				empty: null,
-				NaN: undefined,
-				null: undefined,
+				NaN: void 0,
+				null: void 0,
 			},
 		};
 
@@ -261,68 +233,69 @@ function inferSchema(csvStr, opts, maxRows) {
 	return schema;
 }
 
-function initParser(schema, chunkSize) {
+function initParser(schema) {
 	let { skip, cols } = schema;
 
-	let _toStrs = null;
-	let _toArrs = null;
-	let _toObjs = null;
+	let _toStr = null;
+	let _toArr = null;
+	let _toObj = null;
 	let _toDeep = null;
-	let _toObjsS = null;
+	let _toObjS = null;
 
-	let _toCols = null;
-
-	let streamChunkNum = 0;
 	let streamState = 0;
 	let streamParse = null;
 	let streamCb = null;
-	let pendChunk = '';
 	let prevUnparsed = '';
 
 	let buf = null;
 
 	function reset() {
-		streamState = streamChunkNum = 0;
-		prevUnparsed = pendChunk = '';
+		streamState = 0;
+		prevUnparsed = '';
 		streamParse = streamCb = buf = null;
 	}
 
-	let accum    = (rows, add) => { add(rows); };
+	let accum    = (row, buf, add) => {
+		add(buf, row);
+		return true;
+	};
 	let initRows = () => [];
 	let initCols = () => cols.map(c => []);
-	let addRows  = rows => { buf.push(...rows); };
-	let addCols  = cols => { cols.forEach((vals, ci) => { buf[ci].push(...vals); }); };
+	let addRow  = (buf, row) => { buf.push(row); };
+	let addCol  = new Function('buf', 'row', `
+		${schema.cols.map((c, i) => 'buf[' + i + '].push(row[' + i + '])').join(';')};
+	`);
 
-	function gen(accInit, accAppend, genConvertRows) {
-		let convertRows = null;
+	function gen(accInit, accAppend, genConvertRow) {
+		let convertRow = null;
 
 		return (csvStr, cb = accum) => {
-			convertRows ??= genConvertRows();
+			convertRow ??= genConvertRow();
+
+			let _skip = buf == null ? skip : 0;
 
 			buf ??= accInit();
 			let out = buf;
 			let withEOF = streamState === 0 || streamState === 2;
 
+			let halted = false;
+
 			if (Array.isArray(csvStr)) {
-				// TODO: also handle _skip + chunkSize here?
-				let res = cb(convertRows(csvStr), accAppend);
+				for (let i = 0; i < csvStr.length; i++) {
+					let row = csvStr[i];
+					let res = cb(convertRow(row), out, accAppend);
 
-				if (res === false && streamState !== 0)
-					reset();
+					if (res === false) {
+						halted = true;
+						break;
+					}
+				}
 			}
-			else {
-				let _skip = streamChunkNum === 0 ? skip : 0;
+			else
+				[prevUnparsed, halted] = parse(csvStr, schema, _skip, row => cb(convertRow(row), out, accAppend), withEOF);
 
-				parse(csvStr, schema, (rows, partial) => {
-					prevUnparsed = partial;
-					let res = cb(convertRows(rows), accAppend);
-
-					if (res === false && streamState !== 0)
-						reset();
-
-					return res;
-				}, _skip, withEOF, chunkSize);
-			}
+			if (halted && streamState !== 0)
+				reset();
 
 			if (withEOF)
 				buf = null;
@@ -331,50 +304,45 @@ function initParser(schema, chunkSize) {
 		};
 	}
 
-	const stringArrs = gen(initRows, addRows, () => {
-		_toStrs ??= rows => rows;
-		return _toStrs;
-	});
+	const _toStrGen = () => {
+		_toStr ??= row => row;
+		return _toStr;	};
 
-	const stringObjs = gen(initRows, addRows, () => {
-		_toObjsS ??= genToTypedRows(cols.map(col => ({
+	const _toArrGen = () => {
+		_toArr ??= genToTypedRow(cols, false, false);
+		return _toArr;
+	};
+
+	const stringArrs = gen(initRows, addRow, _toStrGen);
+
+	const stringObjs = gen(initRows, addRow, () => {
+		_toObjS ??= genToTypedRow(cols.map(col => ({
 			...col,
 			type: 's',
 			repl: {
 				...col.repl,
-				empty: undefined,
+				empty: void 0,
 			}
 		})), true, false);
 
-		return _toObjsS;
+		return _toObjS;
 	});
 
-	const typedArrs = gen(initRows, addRows, () => {
-		_toArrs ??= genToTypedRows(cols, false, false);
-		return _toArrs;
+	const typedArrs = gen(initRows, addRow, _toArrGen);
+
+	const typedObjs = gen(initRows, addRow, () => {
+		_toObj ??= genToTypedRow(cols, true, false);
+		return _toObj;
 	});
 
-	const typedObjs = gen(initRows, addRows, () => {
-		_toObjs ??= genToTypedRows(cols, true, false);
-		return _toObjs;
-	});
-
-	const typedDeep = gen(initRows, addRows, () => {
-		_toDeep ??= genToTypedRows(cols, true, true);
+	const typedDeep = gen(initRows, addRow, () => {
+		_toDeep ??= genToTypedRow(cols, true, true);
 		return _toDeep;
 	});
 
-	const typedCols = gen(initCols, addCols, () => {
-		_toArrs ??= genToTypedRows(cols, false, false);
-		_toCols ??= genToCols(cols);
+	const typedCols = gen(initCols, addCol, _toArrGen);
 
-		return rows => _toCols(_toArrs(rows));
-	});
-
-	const stringCols = gen(initCols, addCols, () => {
-		_toCols ??= genToCols(cols);
-		return _toCols;
-	});
+	const stringCols = gen(initCols, addCol, _toStrGen);
 
 	return {
 		schema,
@@ -392,24 +360,22 @@ function initParser(schema, chunkSize) {
 			streamParse ??= parse;
 			streamCb    ??= cb;
 
-			if (streamState === 1) {
-				streamParse(prevUnparsed + pendChunk, streamCb);
-				streamChunkNum++;
-			}
-
-			pendChunk = csvStr;
 			streamState = 1;
+			streamParse(prevUnparsed + csvStr, streamCb);
 		},
 		end() {
 			streamState = 2;
-			let out = streamParse(prevUnparsed + pendChunk, streamCb);
+			let out = streamParse(prevUnparsed, streamCb);
 			reset();
 			return out;
 		},
 	};
 }
 
-function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_SIZE, chunkLimit = null, _maxCols = null) {
+// todo: allow schema to have col.skip: true
+// _maxCols is cols estimated by simple delimiter detection and split()
+// returns [unparsed tail, shouldHalt]
+function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _maxCols) {
 	let {
 		row:  rowDelim,
 		col:  colDelim,
@@ -418,16 +384,19 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		trim,
 	} = schema;
 
-	colEncl  ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
-	escEncl  ??= colEncl;
+	// is this cheap in WebKit/Mozilla, would simplify exit conditions
+	// if (withEOF && !csvStr.endsWith(rowDelim))
+	// 	csvStr += rowDelim;
+
+	colEncl ??= csvStr.indexOf(quote) > -1 ? quote : ''; 	// TODO: detect single quotes?
+	escEncl ??= colEncl;
 
 	let replEsc = `${escEncl}${colEncl}`;
 
-	let numCols = _maxCols || schema.cols.length;
+	let numCols = _maxCols ?? schema.cols.length;
 
-	let _limit = chunkLimit != null;
 	// uses a slower regexp path for schema probing
-	let _probe = _maxCols != null && _limit;
+	let _probe = _maxCols != null;
 
 	let rowDelimLen = rowDelim.length;
 	let colDelimLen = colDelim.length;
@@ -438,13 +407,12 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 	let colDelimChar = colDelim.charCodeAt(0);
 	let spaceChar    = 32;
 
-	let numChunks = 0;
+	let out = ['', false];
 
 	let pos = 0;
 	let endPos = csvStr.length - 1;
 	let linePos = 0;
 
-	let rows = [];
 	let rowTpl = Array(numCols).fill('');
 	let row = rowTpl.slice();
 
@@ -467,14 +435,12 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				let s = csvStr.slice(pos, pos2);
 				row[colIdx] = trim ? s.trim() : s;
 
-				--skip < 0 && rows.push(row);
-
-				if (rows.length === chunkSize) {
-					let stop = cb(rows, '') === false;
-					rows = [];
-
-					if (stop || _limit && ++numChunks === chunkLimit)
-						return;
+				if (--skip < 0) {
+					if (each(row) === false) {
+						// if caller indicates an early exit, we dont return the unparsed tail
+						out[1] = true;
+						return out;
+					}
 				}
 
 				row = rowTpl.slice();
@@ -505,13 +471,11 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 			}
 		}
 
-		if (withEOF && colIdx === lastColIdx && filledColIdx > -1)
-			--skip < 0 && rows.push(row);
+		if (--skip < 0 && withEOF && colIdx === lastColIdx && filledColIdx > -1)
+			each(row);
 
-		if (!withEOF || rows.length > 0)
-			cb(rows, !withEOF ? csvStr.slice(linePos) : '');
-
-		return;
+		out[0] = !withEOF ? csvStr.slice(linePos) : '';
+		return out;
 	}
 
 	// should this be * to handle ,, ?
@@ -557,19 +521,17 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				v = '';
 
 				if (c === rowDelimChar) {
-					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
+					if (_probe && filledColIdx < lastColIdx && linePos === 0) {
 						row.length = rowTpl.length = filledColIdx + 1;
 						lastColIdx = filledColIdx;
 					}
 
-					--skip < 0 && rows.push(row);
-
-					if (rows.length === chunkSize) {
-						let stop = cb(rows, '') === false;
-						rows = [];
-
-						if (stop || _limit && ++numChunks === chunkLimit)
-							return;
+					if (--skip < 0) {
+						if (each(row) === false) {
+							// if caller indicates an early exit, we dont return the unparsed tail
+							out[1] = true;
+							return out;
+						}
 					}
 
 					row = rowTpl.slice();
@@ -682,19 +644,17 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 				v = '';
 
 				if (c === rowDelimChar) {
-					if (_probe && filledColIdx < lastColIdx && rows.length === 0) {
+					if (_probe && filledColIdx < lastColIdx && linePos === 0) {
 						row.length = rowTpl.length = filledColIdx + 1;
 						lastColIdx = filledColIdx;
 					}
 
-					--skip < 0 && rows.push(row);
-
-					if (rows.length === chunkSize) {
-						let stop = cb(rows, '') === false;
-						rows = [];
-
-						if (stop || _limit && ++numChunks === chunkLimit)
-							return;
+					if (--skip < 0) {
+						if (each(row) === false) {
+							// if caller indicates an early exit, we dont return the unparsed tail
+							out[1] = true;
+							return out;
+						}
 					}
 
 					row = rowTpl.slice();
@@ -730,7 +690,10 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 
 	if (withEOF && colIdx === lastColIdx) {
 		row[colIdx] = v;
-		--skip < 0 && rows.push(row);
+
+		if (--skip < 0)
+			each(row);
+
 		inCol = 0;
 	}
 
@@ -742,7 +705,8 @@ function parse(csvStr, schema, cb, skip = 0, withEOF = true, chunkSize = CHUNK_S
 		)
 	);
 
-	cb(rows, partial ? csvStr.slice(linePos) : '');
+	out[0] = partial ? csvStr.slice(linePos) : '';
+	return out;
 }
 
 // const parsed = {

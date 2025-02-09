@@ -84,11 +84,13 @@ export interface Schema {
 
 /** can return false to stop further parsing */
 export type OnDataFn<T> = (
-	/** parsed rows or cols */
-	data: T[],
-	/** appender (for internal buffer) */
-	append: (data: T[]) => void
-) => void | false; // | T[];
+	/** parsed row */
+	row: T,
+	/** internal buffer */
+	buf: T[],
+	/** appender */
+	append: (buf: T[], row: T) => void
+) => void | boolean;
 
 export type BaseParse<T> = (csvStr: string, onData?: OnDataFn<T>) => T[];
 
@@ -147,7 +149,4 @@ export function inferSchema(
 export function initParser(
 	/** inferred or manually defined schema */
 	schema: Schema,
-
-	/** how many parsed items to accumulate for onData (default = 1e3) */
-	chunkSize?: number,
 ): Parser;
