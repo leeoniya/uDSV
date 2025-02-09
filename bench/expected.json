@@ -1,0 +1,30 @@
+{
+  "data-large2.csv": {
+    "rows": 130452,
+    "cols": 37
+  },
+  "uszips.csv": {
+    "rows": 33790,
+    "cols": 18
+  },
+  "customers-100000.csv": {
+    "rows": 100002,
+    "cols": 12
+  },
+  "HPI_master.csv": {
+    "rows": 122299,
+    "cols": 10
+  },
+  "large-dataset2.csv": {
+    "rows": 36342,
+    "cols": 15
+  },
+  "nyc-taxi-data-100K.csv": {
+    "rows": 100001,
+    "cols": 51
+  },
+  "Table_1_Authors_career_2023_pubs_since_1788_wopp_extracted_202408_justnames.csv": {
+    "rows": 217098,
+    "cols": 3
+  }
+}

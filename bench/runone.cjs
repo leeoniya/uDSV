@@ -10,11 +10,14 @@ const verify = !!(argv.verify ?? true);
 
 const fs = require('fs');
 
-const Papa = require('papaparse'); // for output validation
-
 const csvStr = !parserMod.includes('/streaming/non-retained') ? fs.readFileSync(dataPath, 'utf8') : ''; // only if non stream mode?
 
-const expected = verify ? Papa.parse(csvStr).data : [];
+const expectedAll = JSON.parse(fs.readFileSync('./bench/expected.json'));
+const fileName = dataPath.slice(dataPath.lastIndexOf('/') + 1);
+const {
+  rows: expectedRows,
+  cols: expectedCols,
+} = expectedAll[fileName];
 
 const baselineRSS = process.memoryUsage().rss;
 
@@ -169,10 +172,10 @@ async function bench(csvStr, path, parse) {
     }
 
     // TODO: remove tolerance
-    if (verify && (numRows < expected.length - 2 || numRows > expected.length))
-      out.error = `Wrong row count! Expected: ${expected.length}, Actual: ${numRows}`;
-    else if (verify && (numCols !== Object.keys(expected[0]).length))
-      out.error = `Wrong col count! Expected: ${Object.keys(expected[0]).length}, Actual: ${numCols}`;
+    if (verify && (numRows < expectedRows - 2 || numRows > expectedRows))
+      out.error = `Wrong row count! Expected: ${expectedRows}, Actual: ${numRows}`;
+    else if (verify && (numCols !== expectedCols))
+      out.error = `Wrong col count! Expected: ${expectedCols}, Actual: ${numCols}`;
     else {
       const { gmean, rss } = await bench(csvStr, dataPath, parse);
       out.rows = numRows;
