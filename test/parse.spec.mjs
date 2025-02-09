@@ -241,6 +241,143 @@ test('unquoted path, omit empty lines', (t) => {
     ]);
 });
 
+test('unquoted path, omit empty lines', (t) => {
+    const csvStr = `a,b,c\n\n\n1,2,3`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr);
+
+    assert.deepEqual(rows, [
+        ['1','2','3'],
+    ]);
+});
+
+test('unquoted path, callback filter', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,5,6\n7,8,9`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr, (row, buf, add) => {
+        if (row[0] === '1' || row[0] === '7')
+            add(buf, row);
+
+        return true;
+    });
+
+    assert.deepEqual(rows, [
+        ['1', '2', '3'],
+        ['7', '8', '9'],
+    ]);
+});
+
+test('quoted path, callback filter', (t) => {
+    const csvStr = `"a","b","c"\n"1","2","3"\n"4","5","6"\n"7","8","9"`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let rows = parser.stringArrs(csvStr, (row, buf, add) => {
+        if (row[0] === '1' || row[0] === '7')
+            add(buf, row);
+
+        return true;
+    });
+
+    assert.deepEqual(rows, [
+        ['1', '2', '3'],
+        ['7', '8','9'],
+    ]);
+});
+
+test('unquoted path, callback search', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,5,6\n7,8,9`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let seen7 = false;
+
+    let rows = parser.stringArrs(csvStr, (row, buf, add) => {
+        if (row[0] === '4') {
+            add(buf, row);
+            return false; // halt
+        }
+
+        if (row[0] === 7)
+            seen7 = true;
+
+        return true;
+    });
+
+    assert.deepEqual(rows, [
+        ['4', '5', '6'],
+    ]);
+
+    assert.equal(seen7, false);
+});
+
+test('quoted path, callback search', (t) => {
+    const csvStr = `"a","b","c"\n"1","2","3"\n"4","5","6"\n"7","8","9"`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let seen7 = false;
+
+    let rows = parser.stringArrs(csvStr, (row, buf, add) => {
+        if (row[0] === '4') {
+            add(buf, row);
+            return false; // halt
+        }
+
+        if (row[0] === '7')
+            seen7 = true;
+
+        return true;
+    });
+
+    assert.deepEqual(rows, [
+        ['4', '5', '6'],
+    ]);
+
+    assert.equal(seen7, false);
+});
+
+test('unquoted path, callback reduce', (t) => {
+    const csvStr = `a,b,c\n1,2,3\n4,5,6\n7,8,9`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let sum = 0;
+    let rows = parser.stringArrs(csvStr, (row, buf, add) => {
+        sum += +row[1];
+        return true;
+    });
+
+    assert.deepEqual(rows, []);
+    assert.deepEqual(sum, 15);
+});
+
+test('quoted path, callback reduce', (t) => {
+    const csvStr = `"a","b","c"\n"1","2","3"\n"4","5","6"\n"7","8","9"`;
+
+    let schema = inferSchema(csvStr);
+    let parser = initParser(schema);
+
+    let sum = 0;
+    let rows = parser.stringArrs(csvStr, (row, buf, add) => {
+        sum += +row[1];
+        return true;
+    });
+
+    assert.deepEqual(rows, []);
+    assert.deepEqual(sum, 15);
+});
+
 test('single column', (t) => {
     const csvStr = `id\n1`;
 
@@ -676,39 +813,7 @@ test('chunk boundary between \\r and \\n', async (t) => {
     });
 });
 
-test.skip('chunk should return parsed rows', async (t) => {
-    const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
-
-    let schema  = inferSchema(csvStr);
-    schema.skip = 0;
-    let parser = initParser(schema);
-    let rows = parser.stringArrs(csvStr);
-
-    let chunkSizes = [8];
-
-    chunkSizes.forEach(chunkSize => {
-        let chunks = chunkString(csvStr, chunkSize);
-
-        let schema2 = null;
-        let parser2 = null;
-
-        chunks.forEach(chunk => {
-            if (parser2 == null) {
-                schema2 = inferSchema(chunk);
-                schema2.skip = 0;
-                parser2 = initParser(schema2);
-            }
-
-            const rows = parser2.chunk(chunk, parser2.stringArrs);
-            console.log(rows);
-        });
-
-        let rowsIncr = parser2.end();
-        assert.deepEqual(rowsIncr, rows);
-    });
-});
-
-test.skip('chunk stringArrs should call back each row', async (t) => {
+test('chunk() stringArrs should call back each row', async (t) => {
     const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
 
     let schema  = inferSchema(csvStr);
@@ -739,45 +844,36 @@ test.skip('chunk stringArrs should call back each row', async (t) => {
     });
 });
 
-test.skip('chunk() api should not be subject to chunkSize threshold for invoking callback', async (t) => {
+test('chunk() should call back each row, typed, custom callback', async (t) => {
     const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
 
     let schema  = inferSchema(csvStr);
-    // schema.skip = 0;
     let parser = initParser(schema);
+    let rows = parser.typedArrs(csvStr);
 
-    let chunk0 = csvStr.slice(0, 39);
-    let chunk1 = csvStr.slice(39);
+    let chunkSizes = [13];
 
-    parser.chunk(chunk0, parser.stringArrs, (rows) => {
-        console.log(rows);
+    chunkSizes.forEach(chunkSize => {
+        let chunks = chunkString(csvStr, chunkSize);
+
+        let schema2 = null;
+        let parser2 = null;
+
+        chunks.forEach(chunk => {
+            if (parser2 == null) {
+                schema2 = inferSchema(chunk);
+                parser2 = initParser(schema2);
+            }
+
+            parser2.chunk(chunk, parser2.typedArrs, (row, buf, add) => {
+                add(buf, row);
+                return true;
+            });
+        });
+
+        let rowsIncr = parser2.end();
+        assert.deepEqual(rowsIncr, rows);
     });
-
-    // parser.chunk(chunk1, parser.stringArrs, (rows) => {
-    //     console.log(rows);
-    // });
-
-    // let rows = parser.end();
-
-    // chunkSizes.forEach(chunkSize => {
-    //     let chunks = chunkString(csvStr, chunkSize);
-
-    //     let schema2 = null;
-    //     let parser2 = null;
-
-    //     chunks.forEach(chunk => {
-    //         if (parser2 == null) {
-    //             schema2 = inferSchema(chunk);
-    //             schema2.skip = 0;
-    //             parser2 = initParser(schema2);
-    //         }
-
-    //         parser2.chunk(chunk, parser2.stringArrs);
-    //     });
-
-    //     let rowsIncr = parser2.end();
-    //     assert.deepEqual(rowsIncr, rows);
-    // });
 });
 
 test('string/number/bool/date/json', (t) => {
