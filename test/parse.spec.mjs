@@ -1,4 +1,5 @@
 import { inferSchema, initParser } from '../src/uDSV.mjs';
+import { Readable, Transform } from "node:stream";
 import Papa from 'papaparse';
 
 import { strict as assert } from 'node:assert';
@@ -1082,6 +1083,60 @@ test('repl injection guard', (t) => {
             }
         ]);
     }
+});
+
+test('transform stream', (t) => {
+    class ParseCSVTransform extends Transform {
+        #parser = null;
+        #push   = null;
+
+        constructor() {
+            super({ objectMode: true });
+
+            this.#push = parsed => {
+                this.push(parsed);
+            };
+        }
+
+        _transform(chunk, encoding, callback) {
+            let strChunk = chunk.toString();
+            this.#parser ??= initParser(inferSchema(strChunk));
+            this.#parser.chunk(strChunk, this.#parser.typedArrs, this.#push);
+            callback();
+        }
+
+        _flush(callback) {
+            this.#parser.end();
+            callback();
+        }
+    }
+
+    const source = new Readable();
+    const s = source.pipe(new ParseCSVTransform());
+
+    const rows = [];
+    s.on('data', d => {
+        rows.push(d);
+    });
+
+    const csvStr = 'a,b,c\n1,2,3\n4,5,6\n7,8,9\n10,11,12\n13,14,15\n16,17,18';
+    const chunks = csvStr.matchAll(/.{1,13}/gms);
+
+    for (const m of chunks)
+        source.push(m[0]);
+
+    source.push(null);
+
+    s.on('finish', () => {
+        assert.deepEqual(rows, [
+            [ 1, 2, 3 ],
+            [ 4, 5, 6 ],
+            [ 7, 8, 9 ],
+            [ 10, 11, 12 ],
+            [ 13, 14, 15 ],
+            [ 16, 17, 18 ]
+        ]);
+    });
 });
 
 // TODO:

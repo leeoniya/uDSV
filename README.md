@@ -222,6 +222,37 @@ for await (const strChunk of textStream) {
 parser.end();
 ```
 
+Building on the non-accumulating example, Node's [Transform stream](https://nodejs.org/api/stream.html#implementing-a-transform-stream) will be something like:
+
+```js
+import { Transform } from "stream";
+
+class ParseCSVTransform extends Transform {
+  #parser = null;
+  #push   = null;
+
+  constructor() {
+    super({ objectMode: true });
+
+    this.#push = parsed => {
+      this.push(parsed);
+    };
+  }
+
+  _transform(chunk, encoding, callback) {
+    let strChunk = chunk.toString();
+    this.#parser ??= initParser(inferSchema(strChunk));
+    this.#parser.chunk(strChunk, this.#parser.typedArrs, this.#push);
+    callback();
+  }
+
+  _flush(callback) {
+    this.#parser.end();
+    callback();
+  }
+}
+```
+
 ---
 ### TODO?
 
