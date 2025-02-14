@@ -26,5 +26,9 @@
   "Table_1_Authors_career_2023_pubs_since_1788_wopp_extracted_202408_justnames.csv": {
     "rows": 217098,
     "cols": 3
+  },
+  "Airports2.csv": {
+    "rows": 2,
+    "cols": 1
   }
 }

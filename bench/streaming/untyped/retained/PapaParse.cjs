@@ -8,6 +8,7 @@ module.exports = {
 
     return (csvStr, path) => new Promise(res => {
       const file = fs.createReadStream(path);
+
       let rows = [];
 
       Papa.parse(file, {

@@ -73,7 +73,7 @@ async function bench(csvStr, path, parse) {
         if (en - cycleStart >= BENCH_DUR) {
           resolve({
             gmean: geoMean(durs),
-            rss: Math.max(...rss),
+            rss: geoMean(rss),
           });
 
           break;

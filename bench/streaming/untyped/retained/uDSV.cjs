@@ -7,7 +7,7 @@ module.exports = {
     const { inferSchema, initParser } = await import('../../../../dist/uDSV.cjs.js');
 
     return (csvStr, path) => new Promise(res => {
-      const readableStream = fs.createReadStream(path);
+      const readableStream = fs.createReadStream(path, { highWaterMark: 1024 * 1024 });
 
       let p = null;
 
