@@ -1085,6 +1085,20 @@ test('repl injection guard', (t) => {
     }
 });
 
+test('strip BOM', (t) => {
+    const csvStr = '\uFEFFa,b,c\n1,2,3';
+
+    let schema = inferSchema(csvStr);
+    schema.skip = 0;
+    let parser = initParser(schema);
+    let arrs = parser.stringArrs(csvStr);
+
+    assert.deepEqual(arrs, [
+        ['a','b','c'],
+        ['1','2','3'],
+    ]);
+});
+
 test('transform stream', (t) => {
     class ParseCSVTransform extends Transform {
         #parser = null;

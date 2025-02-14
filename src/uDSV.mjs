@@ -11,6 +11,10 @@ const BOOL_RE = /^(?:t(?:rue)?|f(?:alse)?|y(?:es)?|n(?:o)?|0|1)$/i;
 
 const COL_DELIMS = [tab, pipe, semi, comma];
 
+function stripBOM(str) {
+	return str.charCodeAt(0) === 0xFEFF ? str.slice(1) : str;
+}
+
 function boolTrue(v) {
 	let [c0, c1 = ''] = v;
 
@@ -167,6 +171,8 @@ export function inferSchema(csvStr, opts, maxRows) {
 	headerFn ??= firstRows => [firstRows[0]];
 
 	maxRows ??= 10;
+
+	csvStr = stripBOM(csvStr);
 
 	// will fail if header contains line breaks in quoted value
 	// will fail if single line without line breaks
@@ -368,6 +374,8 @@ export function initParser(schema) {
 // _maxCols is cols estimated by simple delimiter detection and split()
 // returns [unparsed tail, shouldHalt]
 function parse(csvStr, schema, skip = 0, each = () => true, withEOF = true, _maxCols) {
+	csvStr = stripBOM(csvStr);
+
 	let {
 		row:  rowDelim,
 		col:  colDelim,
