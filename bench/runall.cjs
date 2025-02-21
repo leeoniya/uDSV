@@ -171,18 +171,38 @@ let streamingParsers = [
   './streaming/untyped/retained/ya-csv.cjs',
   './streaming/untyped/retained/dekkai.cjs',
   './streaming/untyped/retained/utils-dsv-base-parse.cjs',
-
-  // only use with litmus_ints.csv or Ariports2.csv numeric dataset, since these sum the 6th column
-  // './streaming/untyped/non-retained/uDSV.cjs',
-  // './streaming/untyped/non-retained/PapaParse.cjs',
-  // './streaming/untyped/non-retained/dekkai.cjs',
 ];
+
+// only use with litmus_ints.csv or Ariports2.csv numeric dataset, since these sum the 6th column
+let streamingParsers2 = [
+  './streaming/untyped/non-retained/uDSV.cjs',
+  './streaming/untyped/non-retained/PapaParse.cjs',
+  './streaming/untyped/non-retained/dekkai.cjs',
+];
+
+let FAST_PARSER_NAMES_RE = new RegExp([
+  'uDSV',
+  'PapaParse',
+  'd3-dsv',
+  'csv-simple-parser',
+  'CSVtoJSON',
+  'arquero',
+  'tiddlycsv',
+  'csv42',
+  'but-csv',
+  'csv-rex',
+  'achilles-csv-parser',
+  'ACsv',
+].join('|'));
+
+const ONLY_FAST_PARSERS = false;
 
 let parserPaths = [
   ...untypedParsers,
   // ...typedParsers,
   // ...typedDeepParsers,
   // ...streamingParsers,
+  // ...streamingParsers2
 ];
 
 let bin = process.argv0;
@@ -203,6 +223,8 @@ async function go(parserPath, dataPath, dataSize) {
     `--parser=${parserPath}`,
     `--verify=${verify}`
   ]));
+
+  // /usr/bin/time -v bun run ./bench/runone.cjs --data=./bench/data/customers-100000.csv --parser=./non-streaming/typed/uDSV-arrs.cjs --verify=1
 
   if (result.status !== 0)
     console.error(result.stderr.toString());
@@ -241,7 +263,7 @@ async function go(parserPath, dataPath, dataSize) {
     });
 
     const blocksMBPS = 55;
-    const blocksRSS = 27;
+    const blocksRSS = 28;
 
     let { cols, rows } = results.find(r => r.rows != null) ?? { cols: 0, rows: 0 };
 
@@ -294,9 +316,22 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
       const fileSize = fs.statSync(dataPath).size;
       // const expected = Papa.parse(csvStr).data;
 
+      let benchedCount = 0;
+
       for (let parserPath of parserPaths) {
+        if (ONLY_FAST_PARSERS) {
+          const parserName = require(parserPath).name;
+
+          if (!FAST_PARSER_NAMES_RE.test(parserName))
+            continue;
+        }
+
+        if (benchedCount > 0)
+          await sleep(CYCLE_DELAY);
+
         await go(parserPath, dataPath, fileSize);
-        await sleep(CYCLE_DELAY);
+
+        benchedCount++;
       }
     }
   } catch (spawnErr) {
