@@ -19,7 +19,7 @@
     "@stdlib/utils-dsv-base-parse": "^0.2.2",
     "@vanillaes/csv": "^3.0.4",
     "achilles-csv-parser": "^1.1.0",
-    "arquero": "^8.0.0",
+    "arquero": "^8.0.1",
     "but-csv": "^2.0.14",
     "comma-separated-values": "^3.6.4",
     "convert-csv-to-json": "^2.50.0",
