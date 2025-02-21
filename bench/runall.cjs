@@ -1,7 +1,7 @@
 // node ./bench/runall.cjs
 // node --max-old-space-size=1536 ./bench/runall.cjs
 
-const CYCLE_DELAY = 10_000;
+const CYCLE_DELAY = 30_000;
 
 const fs = require('node:fs');
 const { genTable } = require('./table.cjs');
