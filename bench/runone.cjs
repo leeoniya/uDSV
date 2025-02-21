@@ -73,7 +73,8 @@ async function bench(csvStr, path, parse) {
         if (en - cycleStart >= BENCH_DUR) {
           resolve({
             gmean: geoMean(durs),
-            rss: geoMean(rss),
+            // largest single positive alloc
+            rss: rss.reduce((max, v, i) => i === 0 ? 0 : Math.max(max, v - rss[i-1]), 0),
           });
 
           break;

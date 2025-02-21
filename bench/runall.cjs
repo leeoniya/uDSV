@@ -217,7 +217,7 @@ async function go(parserPath, dataPath, dataSize) {
       results.push({
         name: parserName,
         ...r,
-        rss: r.rss == null ? null : r.rss - r.rssBase,
+        rss: r.rss == null ? null : r.rss,
       });
     } catch (e) {
       console.log(res);
