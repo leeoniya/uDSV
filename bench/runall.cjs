@@ -93,6 +93,8 @@ let typedParsers = [
   './non-streaming/typed/d3-dsv-arrs.cjs',
   // './non-streaming/typed/d3-dsv-objs.cjs',
 
+  './non-streaming/typed/arquero.cjs',
+
   './non-streaming/typed/csv-rex.cjs',
   './non-streaming/typed/comma-separated-values.cjs',
   './non-streaming/typed/csv42.cjs',
@@ -128,14 +130,17 @@ let untypedParsers = [
 
   './non-streaming/untyped/uDSV.cjs',
   './non-streaming/untyped/csv-simple-parser.cjs',
+  './non-streaming/untyped/d3-dsv.cjs',
 
   './non-streaming/untyped/PapaParse.cjs',
   // './non-streaming/untyped/PapaParse-objs.cjs',
 
-  './non-streaming/untyped/ACsv.cjs',
-  './non-streaming/untyped/d3-dsv.cjs',
-  './non-streaming/untyped/csv-rex.cjs',
+  './non-streaming/untyped/tiddlycsv.cjs',
+  './non-streaming/untyped/arquero-native.cjs',
   './non-streaming/untyped/but-csv.cjs',
+
+  './non-streaming/untyped/ACsv.cjs',
+  './non-streaming/untyped/csv-rex.cjs',
   './non-streaming/untyped/node-csvtojson.cjs',
   './non-streaming/untyped/comma-separated-values.cjs',
   './non-streaming/untyped/achilles-csv-parser.cjs',
@@ -165,6 +170,7 @@ let untypedParsers = [
 let streamingParsers = [
   './streaming/untyped/retained/uDSV.cjs',
   './streaming/untyped/retained/PapaParse.cjs',
+  './streaming/untyped/retained/tiddlycsv.cjs',
   './streaming/untyped/retained/node-csvtojson.cjs',
   './streaming/untyped/retained/csv-rex.cjs',
   './streaming/untyped/retained/csv-parser.cjs',
