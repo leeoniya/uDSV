@@ -43,7 +43,7 @@ On a Ryzen 7 ThinkPad, Linux v6.4.11, and NodeJS v20.6.0, a diverse set of bench
 
 For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
 
-```
+<pre>
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
 │ uszips.csv (6 MB, 18 cols x 34K rows)                                                         │
 ├────────────────────────┬────────┬─────────────────────────────────────────────────────────────┤
@@ -72,7 +72,7 @@ For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/b
 │ @gregoranders/csv      │ ---    │ Invalid CSV at 1:109                                        │
 │ utils-dsv-base-parse   │ ---    │ unexpected error. Encountered an invalid record. Field 17 o │
 └────────────────────────┴────────┴─────────────────────────────────────────────────────────────┘
-```
+</pre>
 
 ---
 ### Installation
