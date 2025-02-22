@@ -270,6 +270,7 @@ async function go(parserPath, dataPath, dataSize) {
     });
 
     const blocksMBPS = 55;
+    // const blocksMBPS = 34; // for readme
     const blocksRSS = 28;
 
     let { cols, rows } = results.find(r => r.rows != null) ?? { cols: 0, rows: 0 };
@@ -298,6 +299,7 @@ async function go(parserPath, dataPath, dataSize) {
 
       return {
         "Name":   name,
+        // "Name":   name.replaceAll(' typed []', '').replaceAll(' typed {}', ''), // for readme
         // "Ops/s":  fmtNum3(opsPerSecGmean),
         "Rows/s": fmtNum3(opsPerSecGmean * rows),
         "Throughput (MiB/s)": "░".repeat(Math.ceil(blocksMBPS * pctGMean))  + ' ' + fmtNum3(mbps),
