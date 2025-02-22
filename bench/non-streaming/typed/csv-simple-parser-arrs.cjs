@@ -1,3 +1,5 @@
+const RE_IS_DATE = /^\d{4}-\d{2}-\d{2}/;
+
 const infer = value => {
   if (value === '')
     return null;
@@ -8,6 +10,9 @@ const infer = value => {
 
   if (value[0] === '{' || value[0] === '[')
     return JSON.parse(value);
+
+  if (RE_IS_DATE.test(value))
+      return new Date(value);
 
   let asNum = +value;
 
