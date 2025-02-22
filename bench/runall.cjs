@@ -136,7 +136,7 @@ let untypedParsers = [
   // './non-streaming/untyped/PapaParse-objs.cjs',
 
   './non-streaming/untyped/tiddlycsv.cjs',
-  './non-streaming/untyped/arquero-native.cjs',
+  // './non-streaming/untyped/arquero-native.cjs',
   './non-streaming/untyped/but-csv.cjs',
 
   './non-streaming/untyped/ACsv.cjs',
@@ -144,6 +144,7 @@ let untypedParsers = [
   './non-streaming/untyped/node-csvtojson.cjs',
   './non-streaming/untyped/comma-separated-values.cjs',
   './non-streaming/untyped/achilles-csv-parser.cjs',
+  './non-streaming/untyped/arquero.cjs',
 
   './non-streaming/untyped/dekkai.cjs',
   // './non-streaming/untyped/dekkai-native.cjs',
