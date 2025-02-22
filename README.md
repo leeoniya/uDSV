@@ -41,8 +41,6 @@ In contrast, uDSV remains fast with any datasets and all options; its happy path
 
 On a Ryzen 7 ThinkPad, Linux v6.13.3, and NodeJS v22.14.0, a diverse set of benchmarks show a 1x-5x performance boost relative to the [popular](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), [proven-fast](https://leanylabs.com/blog/js-csv-parsers-benchmarks/), [Papa Parse](https://www.papaparse.com/).
 
-For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
-
 <pre>
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
 │ customers-100000.csv (17 MB, 12 cols x 100K rows)                        (parsing to strings) │
@@ -76,6 +74,10 @@ For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/b
 └────────────────────────┴────────┴─────────────────────────────────────────────────────────────┘
 </pre>
 
+You might be thinking, "Okay, it's not _that_ much faster than PapaParse".
+But things change significantly when parsing with types.
+PapaParse is 50% slower without even creating the 100k `Date` objects that other libs do.
+
 <pre>
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
 │ customers-100000.csv (17 MB, 12 cols x 100K rows)                        (parsing with types) │
@@ -100,6 +102,36 @@ For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/b
 │ SheetJS                │ 64.5K  │ ░░░ 10.7                               │ number,string      │
 └────────────────────────┴────────┴────────────────────────────────────────┴────────────────────┘
 </pre>
+
+And when the dataset also has many quoted values, the performance gap grows to 3x.
+Once again, we're ignoring the fact that results with "object" types ran `JSON.parse()` 34k times.
+
+<pre>
+┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+│ uszips.csv (6 MB, 18 cols x 34K rows)                                    (parsing with types) │
+├────────────────────────┬────────┬─────────────────────────┬───────────────────────────────────┤
+│ Name                   │ Rows/s │ Throughput (MiB/s)      │ Types                             │
+├────────────────────────┼────────┼─────────────────────────┼───────────────────────────────────┤
+│ uDSV                   │ 521K   │ ░░░░░░░░░░░░░░░░░░░░ 93 │ boolean,null,number,object,string │
+│ csv-simple-parser      │ 416K   │ ░░░░░░░░░░░░░░░░ 74.3   │ boolean,null,number,object,string │
+│ achilles-csv-parser    │ 342K   │ ░░░░░░░░░░░░░░ 61.2     │ boolean,null,number,object,string │
+│ d3-dsv                 │ 284K   │ ░░░░░░░░░░░ 50.8        │ null,number,string                │
+│ csv-rex                │ 267K   │ ░░░░░░░░░░░ 47.7        │ boolean,null,number,object,string │
+│ comma-separated-values │ 262K   │ ░░░░░░░░░░░ 46.7        │ number,string                     │
+│ dekkai                 │ 258K   │ ░░░░░░░░░░ 46.1         │ NaN,number,string                 │
+│ arquero                │ 251K   │ ░░░░░░░░░░ 44.9         │ null,number,string                │
+│ CSVtoJSON              │ 236K   │ ░░░░░░░░░░ 42.2         │ number,string                     │
+│ csv42                  │ 225K   │ ░░░░░░░░░ 40.1          │ number,object,string              │
+│ csv-js                 │ 215K   │ ░░░░░░░░░ 38.4          │ boolean,number,string             │
+│ csv-parser (neat-csv)  │ 198K   │ ░░░░░░░░ 35.3           │ boolean,null,number,object,string │
+│ @vanillaes/csv         │ 179K   │ ░░░░░░░ 32              │ NaN,number,string                 │
+│ PapaParse              │ 176K   │ ░░░░░░░ 31.4            │ boolean,null,number,string        │
+│ SheetJS                │ 98.6K  │ ░░░░ 17.6               │ boolean,number,string             │
+│ csv-parse/sync         │ 91.8K  │ ░░░░ 16.4               │ number,string                     │
+└────────────────────────┴────────┴─────────────────────────┴───────────────────────────────────┘
+</pre>
+
+For _way too many_ synthetic and real-world benchmarks, head over to [/bench](/bench)...and don't forget your coffee!
 
 ---
 ### Installation
