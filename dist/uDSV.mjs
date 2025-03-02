@@ -4,7 +4,7 @@
 *
 * uDSV.js
 * A small, fast CSV parser
-* https://github.com/leeoniya/uDSV (v0.6.0)
+* https://github.com/leeoniya/uDSV (v0.7.0)
 */
 
 const comma = ',';
