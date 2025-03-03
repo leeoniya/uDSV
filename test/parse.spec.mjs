@@ -596,6 +596,22 @@ test('typed objs (from string arrs)', (t) => {
     ]);
 });
 
+test('custom typed parser', (t) => {
+    const csvStr = `a,b,c\n1,2,a-b-c\n4,5,d-e`;
+
+    let schema = inferSchema(csvStr);
+    schema.cols[2].parse = str => str.split('-');
+
+    let parser = initParser(schema);
+
+    let rows = parser.typedObjs(csvStr);
+
+    assert.deepEqual(rows, [
+        {a: 1, b: 2, c: ['a', 'b', 'c']},
+        {a: 4, b: 5, c: ['d', 'e',    ]},
+    ]);
+});
+
 test('string objs', (t) => {
     const csvStr = `a,b,c\n1,2,3\n4,,6\n7,NaN,null`;
 

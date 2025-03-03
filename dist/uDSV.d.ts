@@ -60,6 +60,8 @@ export interface SchemaColumn {
 		/** 'NaN' strings (only applies when type: number) */
 		NaN: any;    // undefined
 	};
+
+	parse?: (str: string) => any;
 }
 
 export interface Schema {

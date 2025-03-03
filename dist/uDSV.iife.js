@@ -88,11 +88,12 @@ var uDSV = (function (exports) {
 	const onlyStrEsc = v => typeof v === 'string' ? toJSON(v) : v;
 
 	function getValParseExpr(ci, col) {
-		let { type } = col;
+		let { type, parse } = col;
 
 		let rv = `r[${ci}]`;
 
 		let parseExpr =
+		    parse   !=  null      ? `c[${ci}].parse(${rv})`                             :
 			type    === T_DATE    ? `new Date(${rv})`                                   :
 			type    === T_JSON    ? `JSON.parse(${rv})`                                 :
 			type    === T_NUMBER  ? `+${rv}`                                            :
@@ -162,7 +163,7 @@ var uDSV = (function (exports) {
 			}
 		}
 
-		return new Function('r', `return ${buf}`);
+		return new Function('c', `return r => (${buf});`)(cols);
 	}
 
 	// https://www.loc.gov/preservation/digital/formats/fdd/fdd000323.shtml
