@@ -187,6 +187,27 @@ let stringArrs = parser.stringArrs(csvStr);
 let typedObjs = parser.typedObjs(stringArrs);
 ```
 
+Need a custom or user-defined parser for a specific column?
+No problem!
+
+```js
+const csvStr = `a,b,c\n1,2,a-b-c\n4,5,d-e`;
+
+let schema = inferSchema(csvStr);
+schema.cols[2].parse = str => str.split('-');
+
+let parser = initParser(schema);
+
+let rows = parser.typedObjs(csvStr);
+
+/*
+[
+  {a: 1, b: 2, c: ['a', 'b', 'c']},
+  {a: 4, b: 5, c: ['d', 'e',    ]},
+]
+*/
+```
+
 Nested/deep objects can be re-constructed from column naming via `.typedDeep()`:
 
 ```js
