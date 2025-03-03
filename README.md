@@ -174,6 +174,19 @@ let stringObjs = parser.stringObjs(csvStr); // [ {a: '1', b: '2', c: '3'}, {a: '
 let stringCols = parser.typedCols(csvStr);  // [ ['1', '4'], ['2', '5'], ['3', '6'] ]
 ```
 
+Sometimes you may need to render the unmodified string values (like in an editable grid), but want to sort/filter using the typed values (e.g. number or date columns).
+uDSV's `.typed*()` methods additionally accept the untyped string-tuples array returned by `parser.stringArrs(csvStr)`:
+
+```js
+let schema = inferSchema(csvStr);
+let parser = initParser(schema);
+
+// raw parsed strings for rendering
+let stringArrs = parser.stringArrs(csvStr);
+// typed values for sorting/filtering
+let typedObjs = parser.typedObjs(stringArrs);
+```
+
 Nested/deep objects can be re-constructed from column naming via `.typedDeep()`:
 
 ```js
