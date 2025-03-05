@@ -65,6 +65,9 @@ export interface SchemaColumn {
 }
 
 export interface Schema {
+    /** inital rows to skip */
+    skip: number;
+	
 	/** column delimiter */
 	col:    string;
 
@@ -72,10 +75,10 @@ export interface Schema {
 	row:    string;
 
 	/** column enclosure */
-	encl:   string;
+	encl?:   string;
 
 	/** column enclosure escape */
-	esc:    string;
+	esc?:    string;
 
 	/** trim values (excludes within quotes) */
 	trim:   boolean;
