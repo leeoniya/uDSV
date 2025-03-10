@@ -54,6 +54,7 @@ var uDSV = (function (exports) {
 
 	const T_STRING  = 's';
 	const T_DATE    = 'd';
+	const T_TIME    = 't';
 	const T_NUMBER  = 'n';
 	const T_JSON    = 'j';
 	const T_BOOLEAN = 'b';
@@ -95,6 +96,7 @@ var uDSV = (function (exports) {
 		let parseExpr =
 		    parse   !=  null      ? `c[${ci}].parse(${rv})`                             :
 			type    === T_DATE    ? `new Date(${rv})`                                   :
+			type    === T_TIME    ? `Date.parse(${rv})`                                 :
 			type    === T_JSON    ? `JSON.parse(${rv})`                                 :
 			type    === T_NUMBER  ? `+${rv}`                                            :
 			type[0] === T_BOOLEAN ? `${rv} === ${toJSON(type.slice(2))} ? true : false` :

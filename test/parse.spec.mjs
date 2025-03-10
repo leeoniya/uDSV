@@ -895,11 +895,12 @@ test('chunk() should call back each row, typed, custom callback', async (t) => {
 
 test('string/number/bool/date/json', (t) => {
     const csvStr = `
-        "zip","lat","lng","city","state_id","state_name","zcta","parent_zcta","population","density","county_fips","county_name","county_weights","county_names_all","county_fips_all","imprecise","military","timezone","date"
-        "00601","18.18027","-66.75266","Adjuntas","PR","Puerto Rico","TRUE","","17126","102.6","72001","Adjuntas","{""72001"": 98.73, ""72141"": 1.27}","Adjuntas|Utuado","72001|72141","FALSE","FALSE","America/Puerto_Rico","2015-12-22T18:45:11.000Z"
+        "zip","lat","lng","city","state_id","state_name","zcta","parent_zcta","population","density","county_fips","county_name","county_weights","county_names_all","county_fips_all","imprecise","military","timezone","date","time"
+        "00601","18.18027","-66.75266","Adjuntas","PR","Puerto Rico","TRUE","","17126","102.6","72001","Adjuntas","{""72001"": 98.73, ""72141"": 1.27}","Adjuntas|Utuado","72001|72141","FALSE","FALSE","America/Puerto_Rico","2015-12-22T18:45:11.000Z","2015-12-22T18:45:11.000Z"
     `.trim().replace(/^\s+|\s+$/gm, '');
 
     let schema = inferSchema(csvStr);
+    schema.cols.find(c => c.name == 'time').type = 't';
     let parser = initParser(schema);
 
     let rows = parser.typedArrs(csvStr);
@@ -928,6 +929,7 @@ test('string/number/bool/date/json', (t) => {
             false,
             'America/Puerto_Rico',
             new Date('2015-12-22T18:45:11.000Z'),
+            Date.parse('2015-12-22T18:45:11.000Z'),
         ]
     ]);
 });
