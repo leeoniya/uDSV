@@ -4,7 +4,7 @@
 *
 * uDSV.js
 * A small, fast CSV parser
-* https://github.com/leeoniya/uDSV (v0.7.1)
+* https://github.com/leeoniya/uDSV (v0.7.2)
 */
 
 var uDSV = (function (exports) {
