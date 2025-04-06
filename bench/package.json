@@ -35,7 +35,7 @@
     "dekkai": "^0.3.6",
     "flat": "^6.0.1",
     "jquery-csv": "^1.0.40",
-    "json-2-csv": "^5.5.8",
+    "json-2-csv": "^5.5.9",
     "neat-csv": "^7.0.0",
     "papaparse": "^5.5.2",
     "tiddlycsv": "^1.0.2",
