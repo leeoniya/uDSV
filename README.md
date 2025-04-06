@@ -171,7 +171,7 @@ let typedObjs  = parser.typedObjs(csvStr);  // [ {a: 1, b: 2, c: 3}, {a: 4, b: 5
 let typedCols  = parser.typedCols(csvStr);  // [ [1, 4], [2, 5], [3, 6] ]
 
 let stringObjs = parser.stringObjs(csvStr); // [ {a: '1', b: '2', c: '3'}, {a: '4', b: '5', c: '6'} ]
-let stringCols = parser.typedCols(csvStr);  // [ ['1', '4'], ['2', '5'], ['3', '6'] ]
+let stringCols = parser.stringCols(csvStr); // [ ['1', '4'], ['2', '5'], ['3', '6'] ]
 ```
 
 Sometimes you may need to render the unmodified string values (like in an editable grid), but want to sort/filter using the typed values (e.g. number or date columns).
