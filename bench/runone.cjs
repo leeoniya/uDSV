@@ -1,4 +1,5 @@
 // node ./bench/runone.cjs --parser=./non-streaming/typed/uDSV-arrs.cjs --data=./demo/data/15x7.3k-some-quotes.csv
+// bun --inspect run ./bench/runone.cjs --data=./bench/data/data-large2.csv --parser=./non-streaming/untyped/PapaParse.cjs --verify=0 --wait=5000 --cycles=1
 
 const BENCH_DUR = 3_000;
 
@@ -7,6 +8,8 @@ const argv = require('yargs-parser')(process.argv.slice(2));
 const dataPath = argv.data;
 const parserMod = argv.parser;
 const verify = !!(argv.verify ?? true);
+const wait = Number(argv.wait ?? 0);
+const cycles = Number(argv.cycles ?? Infinity);
 
 const fs = require('fs');
 
@@ -50,6 +53,7 @@ function geoMean(arr) {
 }
 
 const sleep = ms => new Promise(resolve => setImmediate(resolve));
+const pauseFor = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function bench(csvStr, path, parse) {
   let durs = [];
@@ -70,7 +74,7 @@ async function bench(csvStr, path, parse) {
         durs.push(en - st);
         rss.push(process.memoryUsage.rss());
 
-        if (en - cycleStart >= BENCH_DUR) {
+        if (en - cycleStart >= BENCH_DUR || durs.length == cycles) {
           resolve({
             gmean: geoMean(durs),
             // largest single positive alloc
@@ -100,6 +104,8 @@ async function bench(csvStr, path, parse) {
 
   try {
     const parse = await parser.load();
+
+    await pauseFor(wait);
 
     // console.time('test-parse');
     let result = await parse(csvStr, dataPath);
