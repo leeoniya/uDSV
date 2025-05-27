@@ -271,10 +271,11 @@ var uDSV = (function (exports) {
 		};
 		let initRows = () => [];
 		let initCols = () => cols.map(c => []);
-		let addRow  = (buf, row) => { buf.push(row); };
-		let addCol  = new Function('buf', 'row', `
-		${schema.cols.map((c, i) => 'buf[' + i + '].push(row[' + i + '])').join(';')};
-	`);
+		let addRow   = (buf, row) => { buf.push(row); };
+		let addCol   = (buf, row) => {
+			for (let i = 0; i < cols.length; i++)
+				buf[i].push(row[i]);
+		};
 
 		function gen(accInit, accAppend, genConvertRow) {
 			let convertRow = null;
