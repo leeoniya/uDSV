@@ -39,7 +39,9 @@ Most CSV parsers have one happy/fast path -- the one without quoted values, with
 Once you're off that path, you can generally throw any self-promoting benchmarks in the trash.
 In contrast, uDSV remains fast with any datasets and all options; its happy path is _every path_.
 
-On a Ryzen 7 ThinkPad, Linux v6.13.3, and NodeJS v22.14.0, a diverse set of benchmarks show a 1x-5x performance boost relative to the [popular](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), [proven-fast](https://leanylabs.com/blog/js-csv-parsers-benchmarks/), [Papa Parse](https://www.papaparse.com/).
+On a Ryzen 7 ThinkPad, Linux v6.14.7, and NodeJS v24.1.0, a diverse set of benchmarks show a 2x-5x performance boost relative to the [popular](https://github.com/search?q=csv+parser&type=repositories&s=stars&o=desc), [proven-fast](https://leanylabs.com/blog/js-csv-parsers-benchmarks/), [Papa Parse](https://www.papaparse.com/).
+
+**Parsing to arrays of strings**
 
 <pre>
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -47,36 +49,36 @@ On a Ryzen 7 ThinkPad, Linux v6.13.3, and NodeJS v22.14.0, a diverse set of benc
 ├────────────────────────┬────────┬─────────────────────────────────────────────────────────────┤
 │ Name                   │ Rows/s │ Throughput (MiB/s)                                          │
 ├────────────────────────┼────────┼─────────────────────────────────────────────────────────────┤
-│ csv-simple-parser      │ 1.45M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 240 │
-│ uDSV                   │ 1.39M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 230   │
-│ PapaParse              │ 1.13M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 187             │
-│ tiddlycsv              │ 1.09M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 180              │
-│ ACsv                   │ 1.07M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 176               │
-│ but-csv                │ 1.05M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 174                │
-│ d3-dsv                 │ 987K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 163                  │
-│ csv-rex                │ 887K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 147                      │
-│ csv42                  │ 781K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 129                          │
-│ achilles-csv-parser    │ 687K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░ 114                             │
-│ arquero                │ 567K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 93.6                                │
-│ comma-separated-values │ 545K   │ ░░░░░░░░░░░░░░░░░░░░░ 90                                    │
-│ node-csvtojson         │ 456K   │ ░░░░░░░░░░░░░░░░░░ 75.3                                     │
-│ @vanillaes/csv         │ 427K   │ ░░░░░░░░░░░░░░░░░ 70.5                                      │
-│ SheetJS                │ 415K   │ ░░░░░░░░░░░░░░░░ 68.5                                       │
-│ csv-parser (neat-csv)  │ 307K   │ ░░░░░░░░░░░░ 50.7                                           │
-│ CSVtoJSON              │ 297K   │ ░░░░░░░░░░░░ 49.1                                           │
-│ dekkai                 │ 221K   │ ░░░░░░░░░ 36.5                                              │
-│ csv-js                 │ 206K   │ ░░░░░░░░ 34.1                                               │
-│ @gregoranders/csv      │ 202K   │ ░░░░░░░░ 33.3                                               │
-│ csv-parse/sync         │ 177K   │ ░░░░░░░ 29.3                                                │
-│ jquery-csv             │ 155K   │ ░░░░░░ 25.6                                                 │
-│ @fast-csv/parse        │ 114K   │ ░░░░░ 18.9                                                  │
-│ utils-dsv-base-parse   │ 74.3K  │ ░░░ 12.3                                                    │
+│ csv-simple-parser      │ 2.21M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 366 │
+│ uDSV                   │ 2M     │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 330      │
+│ but-csv                │ 1.15M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 190                           │
+│ PapaParse              │ 1.13M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 186                           │
+│ ACsv                   │ 1.12M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 185                            │
+│ tiddlycsv              │ 1.11M  │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 183                            │
+│ d3-dsv                 │ 939K   │ ░░░░░░░░░░░░░░░░░░░░░░░░ 155                                │
+│ csv-rex                │ 884K   │ ░░░░░░░░░░░░░░░░░░░░░░ 146                                  │
+│ achilles-csv-parser    │ 856K   │ ░░░░░░░░░░░░░░░░░░░░░░ 141                                  │
+│ csv42                  │ 807K   │ ░░░░░░░░░░░░░░░░░░░░░ 133                                   │
+│ arquero                │ 541K   │ ░░░░░░░░░░░░░░ 89.4                                         │
+│ node-csvtojson         │ 478K   │ ░░░░░░░░░░░░ 78.9                                           │
+│ comma-separated-values │ 469K   │ ░░░░░░░░░░░░ 77.4                                           │
+│ CSVtoJSON              │ 447K   │ ░░░░░░░░░░░░ 73.8                                           │
+│ SheetJS                │ 411K   │ ░░░░░░░░░░░ 67.8                                            │
+│ @vanillaes/csv         │ 396K   │ ░░░░░░░░░░ 65.4                                             │
+│ csv-parser (neat-csv)  │ 278K   │ ░░░░░░░ 45.9                                                │
+│ dekkai                 │ 211K   │ ░░░░░░ 34.8                                                 │
+│ @gregoranders/csv      │ 198K   │ ░░░░░ 32.6                                                  │
+│ csv-js                 │ 193K   │ ░░░░░ 31.9                                                  │
+│ csv-parse/sync         │ 153K   │ ░░░░ 25.3                                                   │
+│ jquery-csv             │ 153K   │ ░░░░ 25.3                                                   │
+│ @fast-csv/parse        │ 106K   │ ░░░ 17.6                                                    │
+│ utils-dsv-base-parse   │ 68.9K  │ ░░ 11.4                                                     │
 └────────────────────────┴────────┴─────────────────────────────────────────────────────────────┘
 </pre>
 
-You might be thinking, "Okay, it's not _that_ much faster than PapaParse".
-But things change significantly when parsing with types.
-PapaParse is 50% slower without even creating the 100k `Date` objects that other libs do.
+**Parsing to arrays with types**
+
+Note: `date` in the Types column means the lib created 100,000 `Date` objects; not all libs do.
 
 <pre>
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -84,27 +86,28 @@ PapaParse is 50% slower without even creating the 100k `Date` objects that other
 ├────────────────────────┬────────┬────────────────────────────────────────┬────────────────────┤
 │ Name                   │ Rows/s │ Throughput (MiB/s)                     │ Types              │
 ├────────────────────────┼────────┼────────────────────────────────────────┼────────────────────┤
-│ uDSV                   │ 993K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 164 │ date,number,string │
-│ csv42                  │ 686K   │ ░░░░░░░░░░░░░░░░░░░░░░░░ 113           │ number,string      │
-│ csv-simple-parser      │ 666K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 110            │ date,number,string │
-│ csv-rex                │ 627K   │ ░░░░░░░░░░░░░░░░░░░░░░ 104             │ number,string      │
-│ comma-separated-values │ 536K   │ ░░░░░░░░░░░░░░░░░░░ 88.5               │ number,string      │
-│ achilles-csv-parser    │ 517K   │ ░░░░░░░░░░░░░░░░░░ 85.3                │ number,string      │
-│ arquero                │ 478K   │ ░░░░░░░░░░░░░░░░░ 79                   │ date,number,string │
-│ PapaParse              │ 463K   │ ░░░░░░░░░░░░░░░░ 76.4                  │ number,string      │
-│ d3-dsv                 │ 389K   │ ░░░░░░░░░░░░░░ 64.3                    │ date,number,string │
-│ @vanillaes/csv         │ 312K   │ ░░░░░░░░░░░ 51.5                       │ NaN,number,string  │
-│ CSVtoJSON              │ 284K   │ ░░░░░░░░░░ 46.8                        │ number,string      │
-│ csv-parser (neat-csv)  │ 265K   │ ░░░░░░░░░░ 43.7                        │ number,string      │
-│ csv-js                 │ 211K   │ ░░░░░░░░ 34.8                          │ number,string      │
-│ dekkai                 │ 209K   │ ░░░░░░░░ 34.6                          │ number,string      │
+│ uDSV                   │ 967K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 160 │ date,number,string │
+│ csv42                  │ 712K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░░ 118         │ number,string      │
+│ csv-simple-parser      │ 697K   │ ░░░░░░░░░░░░░░░░░░░░░░░░░ 115          │ date,number,string │
+│ csv-rex                │ 629K   │ ░░░░░░░░░░░░░░░░░░░░░░░ 104            │ number,string      │
+│ achilles-csv-parser    │ 560K   │ ░░░░░░░░░░░░░░░░░░░░ 92.6              │ number,string      │
+│ comma-separated-values │ 471K   │ ░░░░░░░░░░░░░░░░░ 77.7                 │ number,string      │
+│ arquero                │ 459K   │ ░░░░░░░░░░░░░░░░░ 75.9                 │ date,number,string │
+│ PapaParse              │ 454K   │ ░░░░░░░░░░░░░░░░ 75                    │ number,string      │
+│ CSVtoJSON              │ 425K   │ ░░░░░░░░░░░░░░░ 70.1                   │ number,string      │
+│ d3-dsv                 │ 380K   │ ░░░░░░░░░░░░░░ 62.8                    │ date,number,string │
+│ @vanillaes/csv         │ 302K   │ ░░░░░░░░░░░ 49.9                       │ NaN,number,string  │
+│ csv-parser (neat-csv)  │ 260K   │ ░░░░░░░░░░ 43                          │ number,string      │
+│ csv-js                 │ 229K   │ ░░░░░░░░░ 37.9                         │ number,string      │
+│ dekkai                 │ 213K   │ ░░░░░░░░ 35.1                          │ number,string      │
 │ csv-parse/sync         │ 101K   │ ░░░░ 16.7                              │ date,number,string │
-│ SheetJS                │ 64.5K  │ ░░░ 10.7                               │ number,string      │
+│ SheetJS                │ 70.8K  │ ░░░ 11.7                               │ number,string      │
 └────────────────────────┴────────┴────────────────────────────────────────┴────────────────────┘
 </pre>
 
-And when the dataset also has many quoted values, the performance gap grows to 3x.
-Once again, we're ignoring the fact that results with "object" types ran `JSON.parse()` 34k times.
+**Parsing quote-heavy CSV to arrays with types**
+
+Note: `object` in the Types column means the lib called `JSON.parse()` 34,000 times; not all libs do.
 
 <pre>
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -112,22 +115,22 @@ Once again, we're ignoring the fact that results with "object" types ran `JSON.p
 ├────────────────────────┬────────┬─────────────────────────┬───────────────────────────────────┤
 │ Name                   │ Rows/s │ Throughput (MiB/s)      │ Types                             │
 ├────────────────────────┼────────┼─────────────────────────┼───────────────────────────────────┤
-│ uDSV                   │ 521K   │ ░░░░░░░░░░░░░░░░░░░░ 93 │ boolean,null,number,object,string │
-│ csv-simple-parser      │ 416K   │ ░░░░░░░░░░░░░░░░ 74.3   │ boolean,null,number,object,string │
-│ achilles-csv-parser    │ 342K   │ ░░░░░░░░░░░░░░ 61.2     │ boolean,null,number,object,string │
-│ d3-dsv                 │ 284K   │ ░░░░░░░░░░░ 50.8        │ null,number,string                │
-│ csv-rex                │ 267K   │ ░░░░░░░░░░░ 47.7        │ boolean,null,number,object,string │
-│ comma-separated-values │ 262K   │ ░░░░░░░░░░░ 46.7        │ number,string                     │
-│ dekkai                 │ 258K   │ ░░░░░░░░░░ 46.1         │ NaN,number,string                 │
-│ arquero                │ 251K   │ ░░░░░░░░░░ 44.9         │ null,number,string                │
-│ CSVtoJSON              │ 236K   │ ░░░░░░░░░░ 42.2         │ number,string                     │
-│ csv42                  │ 225K   │ ░░░░░░░░░ 40.1          │ number,object,string              │
-│ csv-js                 │ 215K   │ ░░░░░░░░░ 38.4          │ boolean,number,string             │
-│ csv-parser (neat-csv)  │ 198K   │ ░░░░░░░░ 35.3           │ boolean,null,number,object,string │
-│ @vanillaes/csv         │ 179K   │ ░░░░░░░ 32              │ NaN,number,string                 │
+│ uDSV                   │ 537K   │ ░░░░░░░░░░░░░░░░░░░░ 96 │ boolean,null,number,object,string │
+│ csv-simple-parser      │ 445K   │ ░░░░░░░░░░░░░░░░░ 79.6  │ boolean,null,number,object,string │
+│ achilles-csv-parser    │ 420K   │ ░░░░░░░░░░░░░░░░ 75.1   │ boolean,null,number,object,string │
+│ CSVtoJSON              │ 270K   │ ░░░░░░░░░░░ 48.2        │ number,string                     │
+│ d3-dsv                 │ 266K   │ ░░░░░░░░░░ 47.6         │ null,number,string                │
+│ comma-separated-values │ 261K   │ ░░░░░░░░░░ 46.6         │ number,string                     │
+│ csv-rex                │ 255K   │ ░░░░░░░░░░ 45.6         │ boolean,null,number,object,string │
+│ dekkai                 │ 248K   │ ░░░░░░░░░░ 44.3         │ NaN,number,string                 │
+│ arquero                │ 245K   │ ░░░░░░░░░░ 43.8         │ null,number,string                │
+│ csv42                  │ 235K   │ ░░░░░░░░░ 42            │ number,object,string              │
+│ csv-js                 │ 232K   │ ░░░░░░░░░ 41.4          │ boolean,number,string             │
+│ csv-parser (neat-csv)  │ 191K   │ ░░░░░░░░ 34.2           │ boolean,null,number,object,string │
 │ PapaParse              │ 176K   │ ░░░░░░░ 31.4            │ boolean,null,number,string        │
-│ SheetJS                │ 98.6K  │ ░░░░ 17.6               │ boolean,number,string             │
-│ csv-parse/sync         │ 91.8K  │ ░░░░ 16.4               │ number,string                     │
+│ @vanillaes/csv         │ 170K   │ ░░░░░░░ 30.4            │ NaN,number,string                 │
+│ SheetJS                │ 102K   │ ░░░░ 18.3               │ boolean,number,string             │
+│ csv-parse/sync         │ 92.2K  │ ░░░░ 16.5               │ number,string                     │
 └────────────────────────┴────────┴─────────────────────────┴───────────────────────────────────┘
 </pre>
 
