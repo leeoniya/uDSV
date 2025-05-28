@@ -231,6 +231,16 @@ async function go(parserPath, dataPath, dataSize) {
     `--verify=${verify}`
   ]));
 
+  // console.log(cmd.concat([
+  //   // `--max-old-space-size=8192`,
+  //   './bench/runone.cjs',
+  //   `--data=${dataPath}`,
+  //   `--parser=${parserPath}`,
+  //   `--verify=${verify}`
+  // ]));
+
+  // process.exit();
+
   // /usr/bin/time -v bun run ./bench/runone.cjs --data=./bench/data/customers-100000.csv --parser=./non-streaming/typed/uDSV-arrs.cjs --verify=1
 
   if (result.status !== 0)
@@ -269,22 +279,52 @@ async function go(parserPath, dataPath, dataSize) {
       }
     });
 
-    const blocksMBPS = 55;
-    // const blocksMBPS = 34; // for readme
-    const blocksRSS = 28;
-
     let { cols, rows } = results.find(r => r.rows != null) ?? { cols: 0, rows: 0 };
 
     let dataHeader = `${dataPath.split('/').pop()} (${fmtNum2(dataSizeMiB)} MB, ${fmtNum2(cols)} cols x ${fmtNum2(rows)} rows)`;
     let rssHeader = `RSS above ${formatBytes(results[0].rssBase, 0)} baseline (MiB)`;
+    let mbpsHeader = `Throughput (MiB/s)`;
+
+    const mbpsWidth = Math.max(59, mbpsHeader.length);
+    // const mbpsWidth = Math.max(38, mbpsHeader.length); // readme
+    // const mbpsWidth = Math.max(23, mbpsHeader.length); // readme
+    const rssWidth = Math.max(31, rssHeader.length);
+
+    const cleanName = name => name;
+    // const cleanName = name => name.replaceAll(' typed []', '').replaceAll(' typed {}', ''); // readme
+
+    let maxMbps = results.reduce((acc, r) => {
+      if (r.error != null)
+        return acc;
+
+      let opsPerSecGmean = 1e3 / r.gmean;
+      let mbps = opsPerSecGmean * dataSizeMiB;
+
+      return Math.max(acc, mbps);
+    }, 0);
+
+    let maxRss = results.reduce((acc, r) => {
+        if (r.error != null)
+          return acc;
+
+        let rss = r.rss / 1024 / 1024;
+
+        return Math.max(acc, rss);
+    }, 0);
+
+    let maxMbpsLen = fmtNum3(maxMbps).length;
+    let maxRssLen = fmtNum3(maxRss).length;
+
+    const blocksMBPS = mbpsWidth - maxMbpsLen - 1;
+    const blocksRSS = rssWidth - maxRssLen - 1;
 
     let tableRows = results.map(({ name, gmean, rows, sample, types, error, rss }) => {
       if (error != null) {
         return {
-          "Name":   name,
+          "Name":   cleanName(name),
           // "Ops/s":  '---',
           "Rows/s": '---',
-          "Throughput (MiB/s)": error.slice(0, 59),
+          [mbpsHeader]: error.slice(0, mbpsWidth),
           [rssHeader]: '---',
           "Types": '---',
           "Sample": '---',
@@ -298,12 +338,11 @@ async function go(parserPath, dataPath, dataSize) {
       let mbps = opsPerSecGmean * dataSizeMiB;
 
       return {
-        "Name":   name,
-        // "Name":   name.replaceAll(' typed []', '').replaceAll(' typed {}', ''), // for readme
+        "Name":   cleanName(name),
         // "Ops/s":  fmtNum3(opsPerSecGmean),
         "Rows/s": fmtNum3(opsPerSecGmean * rows),
-        "Throughput (MiB/s)": "░".repeat(Math.ceil(blocksMBPS * pctGMean))  + ' ' + fmtNum3(mbps),
-        [rssHeader]:          "░".repeat(Math.ceil(blocksRSS  * pctRSS))    + ' ' + fmtNum3(rss / 1024 / 1024),
+        [mbpsHeader]: "░".repeat(Math.ceil(blocksMBPS * pctGMean))  + ' ' + fmtNum3(mbps),
+        [rssHeader]:  "░".repeat(Math.ceil(blocksRSS  * pctRSS))    + ' ' + fmtNum3(rss / 1024 / 1024),
         "Types": types.join(),
         "Sample": JSON.stringify(sample.slice(1)).slice(0, 50),
       };
