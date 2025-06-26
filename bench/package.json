@@ -22,7 +22,7 @@
     "arquero": "^8.0.3",
     "but-csv": "^2.0.14",
     "comma-separated-values": "^3.6.4",
-    "convert-csv-to-json": "^3.4.0",
+    "convert-csv-to-json": "^3.5.0",
     "csv-js": "^1.0.0",
     "csv-parse": "^5.6.0",
     "csv-parser": "^3.2.0",

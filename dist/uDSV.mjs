@@ -61,8 +61,12 @@ function guessType(ci, rows) {
 	let row = rows.findLast(r =>
 		r[ci] !== ''     &&
 		r[ci] !== 'null' &&
+		r[ci] !== 'Null' &&
 		r[ci] !== 'NULL' &&
-		r[ci] !== 'NaN'
+		r[ci] !== 'NaN'  &&
+		r[ci] !== 'undefined' &&
+		r[ci] !== 'Undefined' &&
+		r[ci] !== 'UNDEFINED'
 	);
 
 	let t = T_STRING;
@@ -86,7 +90,7 @@ const toJSON = JSON.stringify;
 const onlyStrEsc = v => typeof v === 'string' ? toJSON(v) : v;
 
 function getValParseExpr(ci, col) {
-	let { type, parse } = col;
+	let { type, parse, repl } = col;
 
 	let rv = `r[${ci}]`;
 
@@ -98,8 +102,6 @@ function getValParseExpr(ci, col) {
 		type    === T_NUMBER  ? `+${rv}`                                            :
 		type[0] === T_BOOLEAN ? `${rv} === ${toJSON(type.slice(2))} ? true : false` :
 		rv;
-
-	let { repl } = col;
 
 	let nanExpr   = repl.NaN   !== void 0 && type === T_NUMBER ? `${rv} === 'NaN' ? ${onlyStrEsc(repl.NaN)} : `                       : '';
 	let nullExpr  = repl.null  !== void 0                      ? `${rv} === 'null' || ${rv} === 'NULL' ? ${onlyStrEsc(repl.null)} : ` : '';
@@ -231,6 +233,7 @@ function inferSchema(csvStr, opts, maxRows) {
 				empty: null,
 				NaN: void 0,
 				null: void 0,
+				undefined: '',
 			},
 		};
 
