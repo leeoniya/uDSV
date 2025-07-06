@@ -1,6 +1,6 @@
 {
   "name": "udsv",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "A small, fast CSV parser",
   "main": "./dist/uDSV.cjs.js",
   "module": "./dist/uDSV.mjs",
