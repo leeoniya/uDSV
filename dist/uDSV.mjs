@@ -233,7 +233,6 @@ function inferSchema(csvStr, opts, maxRows) {
 				empty: null,
 				NaN: void 0,
 				null: void 0,
-				undefined: '',
 			},
 		};
 

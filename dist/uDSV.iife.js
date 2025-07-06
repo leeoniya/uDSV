@@ -236,7 +236,6 @@ var uDSV = (function (exports) {
 					empty: null,
 					NaN: void 0,
 					null: void 0,
-					undefined: '',
 				},
 			};
 
